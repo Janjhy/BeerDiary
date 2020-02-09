@@ -1,26 +1,29 @@
 package com.example.androiddb
 
 import android.content.Context
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
+import kotlinx.android.synthetic.main.beer_item.view.*
 
-class MyAdapter( val context: Context, val listener: BeerListFragment.BeerFragmentListener) : RecyclerView.Adapter<ViewHolder>() {
+class MyAdapter(val items: List<Beer>, val context: Context, val listener: BeerListFragment.BeerFragmentListener) : RecyclerView.Adapter<ViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         return ViewHolder(LayoutInflater.from(context).inflate(R.layout.beer_item, parent, false))
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        //holder.presidentName.text = presidents[position].getName()
+        holder.beerName.text = items[position].beerName
         holder.itemView.setOnClickListener{
             listener.onButtonClick(position)
         }
     }
 
     override fun getItemCount(): Int {
-        return 0
+        Log.d("items size", items.size.toString())
+        return items.size
     }
 
     override fun getItemId(position: Int): Long {
@@ -30,5 +33,5 @@ class MyAdapter( val context: Context, val listener: BeerListFragment.BeerFragme
 }
 
 class ViewHolder (view: View) : RecyclerView.ViewHolder(view) {
-    //val presidentName = view.president_name
+    val beerName = view.beerName
 }
