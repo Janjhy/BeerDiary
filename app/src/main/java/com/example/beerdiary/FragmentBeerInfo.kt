@@ -1,4 +1,4 @@
-package com.example.androiddb
+package com.example.beerdiary
 
 import android.content.Context
 import android.os.Bundle
@@ -25,8 +25,8 @@ class FragmentBeerInfo : Fragment() {
 
     private var position: Int = 0
 
-    override fun onAttach(context: Context?) {
-        super.onAttach(context)
+    override fun onAttach(context: Context) {
+        context.let { super.onAttach(it) }
         arguments?.getInt("pos")?.let { position = it }
     }
 
@@ -44,7 +44,7 @@ class FragmentBeerInfo : Fragment() {
         btn_add_score_comment.setOnClickListener {
             val score = Integer.parseInt(edit_score.text.toString())
             val comment = edit_comment.text.toString()
-            val db = context?.let { it -> BeerDB.get(it) }
+            val db = context?.let { it2 -> BeerDB.get(it2) }
             Thread(Runnable {
                 val beerId = db?.beerDao()?.getBeersR()?.get(position)?.beerId
                 val review = beerId?.let { it1 -> Review(0, score, comment, it1) }
@@ -56,7 +56,7 @@ class FragmentBeerInfo : Fragment() {
         update()
     }
 
-    fun update() {
+    private fun update() {
         val db = context?.let { it -> BeerDB.get(it) }
 
         Thread(Runnable {

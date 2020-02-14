@@ -1,4 +1,4 @@
-package com.example.androiddb
+package com.example.beerdiary
 
 import org.junit.Test
 

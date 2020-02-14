@@ -1,4 +1,4 @@
-package com.example.androiddb
+package com.example.beerdiary
 
 import android.content.Context
 import android.os.Bundle

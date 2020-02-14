@@ -1,4 +1,4 @@
-package com.example.androiddb
+package com.example.beerdiary
 
 import android.content.Context
 import android.util.Log
@@ -11,7 +11,7 @@ import kotlinx.android.synthetic.main.beer_item.view.*
 class MyAdapter(val items: List<Beer>, val context: Context, val listener: BeerListFragment.BeerFragmentListener) : RecyclerView.Adapter<ViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        return ViewHolder(LayoutInflater.from(context).inflate(R.layout.beer_item, parent, false))
+        return ViewHolder(LayoutInflater.from(context).inflate(R.layout.beer_card, parent, false))
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {

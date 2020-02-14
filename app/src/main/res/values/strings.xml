@@ -1,4 +1,7 @@
 <resources>
     <string name="app_name">AndroidDB</string>
     <string name="add_a_beer">Add a Beer!</string>
+    <string name="no_beer_name">unknown</string>
+    <string name="score">Score</string>
+    <string name="beer_image">Image of beer if taken</string>
 </resources>
