@@ -1,10 +1,8 @@
-package com.example.androiddb
+package com.example.beerdiary
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
-import kotlinx.android.synthetic.main.activity_main.*
-import kotlin.concurrent.thread
 
 class MainActivity : AppCompatActivity(), BeerListFragment.BeerFragmentListener {
 

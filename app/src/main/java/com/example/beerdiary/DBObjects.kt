@@ -1,9 +1,8 @@
-package com.example.androiddb
+package com.example.beerdiary
 
 import android.content.Context
 import androidx.lifecycle.LiveData
 import androidx.room.*
-import java.util.*
 
 @Entity(tableName = "beers")
 data class Beer(
