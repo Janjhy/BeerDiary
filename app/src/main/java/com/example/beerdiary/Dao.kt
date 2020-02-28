@@ -28,5 +28,5 @@ interface BeerDao {
 
     @Transaction
     @Insert
-    fun insertBeerAndReviews(beer: Beer, review: List<Review>)
+    fun insertBeerAndReviews(beer: Beer, review: Review)
 }

@@ -38,7 +38,7 @@ class BeerListFragment : Fragment() {
         if (context is BeerFragmentListener) {
             listener = context
         } else {
-            throw RuntimeException(context.toString() + " must implement BeerFragmentListener")
+            throw RuntimeException("$context must implement BeerFragmentListener")
         }
 
     }
@@ -68,10 +68,10 @@ class BeerListFragment : Fragment() {
             Log.d("info", "name and brewer $beerName $brewerName")
             val beer = Beer(0, beerName, brewerName)
             val db = context?.let { it1 -> BeerDB.get(it1) }
-            val temp: List<Review> = emptyList()
+            val review = Review(0, 0, "", beer.beerId)
 
             Thread(Runnable {
-                val id = db?.beerDao()?.insertBeerAndReviews(beer, temp)
+                val id = db?.beerDao()?.insertBeerAndReviews(beer, review)
                 Log.d("insert", "inserted beer id: $id")
                 //db?.clearAllTables()
                 if (db != null) {
