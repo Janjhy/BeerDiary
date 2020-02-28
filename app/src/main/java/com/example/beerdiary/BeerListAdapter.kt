@@ -8,14 +8,14 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.android.synthetic.main.beer_item.view.*
 
-class MyAdapter(val items: List<Beer>, val context: Context, val listener: BeerListFragment.BeerFragmentListener) : RecyclerView.Adapter<ViewHolder>() {
+class BeerListAdapter(val items: List<BeerAndReviews>, val context: Context, val listener: BeerListFragment.BeerFragmentListener) : RecyclerView.Adapter<ViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         return ViewHolder(LayoutInflater.from(context).inflate(R.layout.beer_card, parent, false))
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.beerName.text = items[position].beerName
+        holder.beerName.text = items[position].beer?.beerName
         holder.itemView.setOnClickListener{
             listener.onButtonClick(position)
         }

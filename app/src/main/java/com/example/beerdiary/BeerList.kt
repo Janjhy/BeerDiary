@@ -7,6 +7,7 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.DefaultItemAnimator
@@ -22,6 +23,7 @@ class BeerListFragment : Fragment() {
             return BeerListFragment()
         }
     }
+
     private var listener: BeerFragmentListener? = null
 
     interface BeerFragmentListener {
@@ -29,7 +31,7 @@ class BeerListFragment : Fragment() {
 
     }
 
-    private lateinit  var mList: RecyclerView
+    private lateinit var mList: RecyclerView
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
@@ -48,23 +50,14 @@ class BeerListFragment : Fragment() {
     ): View? {
         val view: View = inflater.inflate(R.layout.beer_list_fragment, container, false)
 
-        val activity = activity as Context
-
         mList = view.findViewById(R.id.beer_list)
 
         mList.layoutManager = LinearLayoutManager(context)
 
-        val ump = ViewModelProviders.of(this).get(BeerModel::class.java)
-
-        ump.getBeers().observe(this, Observer {
-            mList.adapter =
-                listener?.let { it1 -> MyAdapter(it, activity, it1) }
-        })
+        setAdapter()
 
         mList.itemAnimator = DefaultItemAnimator()
         return view
-
-
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
@@ -75,18 +68,40 @@ class BeerListFragment : Fragment() {
             Log.d("info", "name and brewer $beerName $brewerName")
             val beer = Beer(0, beerName, brewerName)
             val db = context?.let { it1 -> BeerDB.get(it1) }
+            val temp: List<Review> = emptyList()
+
             Thread(Runnable {
-                val id = db?.beerDao()?.insertBeer(beer)
+                val id = db?.beerDao()?.insertBeerAndReviews(beer, temp)
                 Log.d("insert", "inserted beer id: $id")
                 //db?.clearAllTables()
                 if (db != null) {
-                    Log.d("contents", "beer size " + (db.beerDao().getBeersR() ))
+                    Log.d("contents", "beer size " + (db.beerDao().getBeersAndReviews()))
                 }
                 this.activity?.runOnUiThread {
                     mList.adapter?.notifyDataSetChanged()
                 }
             }).start()
 
+        }
+    }
+
+    private fun setAdapter() {
+        val activity = activity as Context
+        if (BeerDB.get(activity).beerDao().getBeersAndReviews().value == null) {
+            Log.d("query", " is null")
+            mList.adapter = listener?.let {
+                val temp: List<BeerAndReviews> = emptyList()
+                BeerListAdapter(
+                    temp, activity,
+                    it
+                )
+            }
+        } else {
+            val ump = ViewModelProviders.of(this).get(BeerModel::class.java)
+            ump.getBeers().observe(this, Observer {
+                mList.adapter =
+                    listener?.let { it1 -> BeerListAdapter(it, activity, it1) }
+            })
         }
     }
 
