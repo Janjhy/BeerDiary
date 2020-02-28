@@ -12,7 +12,6 @@ import kotlinx.android.synthetic.main.beer_review_info.*
 class FragmentBeerInfo : Fragment() {
 
     companion object {
-
         @JvmStatic
         fun newInstance(position: Int): FragmentBeerInfo {
             val detailFragment = FragmentBeerInfo()
@@ -48,7 +47,7 @@ class FragmentBeerInfo : Fragment() {
             Thread(Runnable {
                 val beerId = db?.beerDao()?.getBeersR()?.get(position)?.beerId
                 val review = beerId?.let { it1 -> Review(0, score, comment, it1) }
-                val id = review?.let { it1 -> db.reviewDao().insertReview(it1) }
+                val id = review?.let { it1 -> db.beerDao().insertReview(it1) }
                 Log.d("insert", "inserted review id: $id")
                 update()
             }).start()
@@ -60,9 +59,8 @@ class FragmentBeerInfo : Fragment() {
         val db = context?.let { it -> BeerDB.get(it) }
 
         Thread(Runnable {
-
             val beer = db?.beerDao()?.getBeersR()?.get(position)
-            val review = beer?.beerId?.let { db.reviewDao().getBeerReview(it) }
+            val review = beer?.beerId?.let { db.beerDao().getBeerReview(it) }
             if (beer != null) {
                 Log.d("beer name", beer.beerName)
                 this.activity?.runOnUiThread {
