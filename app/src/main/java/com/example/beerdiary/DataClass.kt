@@ -32,5 +32,5 @@ data class BeerAndReviews(
         parentColumn = "beer_id",
         entityColumn = "review_beer_id"
     )
-    val review: List<Review>? = null
+    val review: Review? = null
 )
