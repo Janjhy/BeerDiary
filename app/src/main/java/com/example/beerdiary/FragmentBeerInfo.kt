@@ -1,15 +1,22 @@
 package com.example.beerdiary
 
 import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import com.google.android.gms.maps.*
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MarkerOptions
 import kotlinx.android.synthetic.main.beer_review_info.*
+import kotlinx.android.synthetic.main.beer_review_info.beer_score_bar
 
-class FragmentBeerInfo : Fragment() {
+class FragmentBeerInfo : Fragment(), OnMapReadyCallback {
 
     companion object {
         @JvmStatic
@@ -22,7 +29,10 @@ class FragmentBeerInfo : Fragment() {
         }
     }
 
+    private lateinit var beerAndReview: BeerAndReviews
     private var position: Int = 0
+    private lateinit var mapViewInfo: com.google.android.gms.maps.MapView
+    private lateinit var mMap: GoogleMap
 
     override fun onAttach(context: Context) {
         context.let { super.onAttach(it) }
@@ -34,49 +44,118 @@ class FragmentBeerInfo : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        return inflater.inflate(R.layout.beer_review_info, container, false)
+        Thread(Runnable { getContent() }).start()
+        val view = inflater.inflate(R.layout.beer_review_info, container, false)
+
+        if ((ContextCompat.checkSelfPermission(
+                activity!!.applicationContext,
+                android.Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED)
+        ) {
+            ActivityCompat.requestPermissions(
+                activity!!,
+                arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION),
+                0
+            )
+        }
+
+        mapViewInfo = view.findViewById(R.id.mapView)
+        mapViewInfo.onCreate(savedInstanceState)
+        mapViewInfo.getMapAsync(this)
+        mapViewInfo.setOnLongClickListener() {
+            beerAndReview.review?.reviewId?.let { it1 -> FragmentLocation.newInstance(it1) }
+                ?.let { it2 ->
+                    activity?.supportFragmentManager?.beginTransaction()
+                        ?.replace(
+                            R.id.fragment_container,
+                            it2
+                        )
+                        ?.addToBackStack(null)?.commit()
+                }
+            true
+        }
+        return view
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
+        if ((ContextCompat.checkSelfPermission(
+                activity!!.applicationContext,
+                android.Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED)
+        ) {
+            ActivityCompat.requestPermissions(
+                activity!!,
+                arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION),
+                0
+            )
+        }
+    }
 
-        btn_add_score_comment.setOnClickListener {
-            val score = Integer.parseInt(edit_score.text.toString())
-            val comment = edit_comment.text.toString()
-            val db = context?.let { it2 -> BeerDB.get(it2) }
-            Thread(Runnable {
-                val beerId = db?.beerDao()?.getBeersR()?.get(position)?.beerId
-                val review = beerId?.let { it1 -> Review(0, score, comment, it1) }
-                val id = review?.let { it1 -> db.beerDao().insertReview(it1) }
-                Log.d("insert", "inserted review id: $id")
-                update()
-            }).start()
+    override fun onResume() {
+        super.onResume()
+        mapViewInfo.onResume()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        mapViewInfo.onPause()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        mapViewInfo.onDestroy()
+    }
+
+    override fun onLowMemory() {
+        super.onLowMemory()
+        mapViewInfo.onLowMemory()
+    }
+
+    override fun onMapReady(gMap: GoogleMap?) {
+        if (gMap != null) {
+            mMap = gMap
+            //val googleMapOptions = GoogleMapOptions().liteMode(true)
+            //mMap.mapType = googleMapOptions.mapType
+            updateMap()
+        }
+    }
+
+    private fun updateMap() {
+        if (beerAndReview.review != null) {
+            mMap.moveCamera(
+                CameraUpdateFactory.newLatLngZoom(
+                    LatLng(
+                        beerAndReview.review!!.latitude,
+                        beerAndReview.review!!.longitude
+                    ),
+                    15.0f
+                )
+            )
+            mMap.uiSettings.isZoomControlsEnabled = true
+            mMap.addMarker(MarkerOptions().position(
+                LatLng(beerAndReview.review!!.latitude,
+                    beerAndReview.review!!.longitude)
+            ))
+        }
+    }
+
+    private fun getContent() {
+        val db = activity?.applicationContext?.let { BeerDB.get(it) }
+        val temp = db?.beerDao()?.getBeersAndReviewsR()?.get(position)
+        Log.d("get", temp.toString())
+        if (temp != null) {
+            beerAndReview = temp
         }
         update()
     }
 
     private fun update() {
-        val db = context?.let { it -> BeerDB.get(it) }
-
-        Thread(Runnable {
-            val beer = db?.beerDao()?.getBeersR()?.get(position)
-            val review = beer?.beerId?.let { db.beerDao().getBeerReview(it) }
-            if (beer != null) {
-                Log.d("beer name", beer.beerName)
-                this.activity?.runOnUiThread {
-                    beer_name.text = beer.beerName
-                    beer_brewer.text = beer.brewer
-                }
-
-            }
-            if (review != null) {
-                this.activity?.runOnUiThread {
-                    beer_score.text = review.score.toString()
-                    beer_comment.text = review.comment
-                }
-
-            }
-        }).start()
+        this.activity?.runOnUiThread {
+            beer_name.text = beerAndReview.beer?.beerName
+            beer_brewer.text = beerAndReview.beer?.brewer
+            beer_score_bar.rating = beerAndReview.review!!.score
+            beer_comment.text = beerAndReview.review?.comment
+        }
     }
-
 }

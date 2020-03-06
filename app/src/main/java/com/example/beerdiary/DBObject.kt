@@ -3,7 +3,7 @@ package com.example.beerdiary
 import android.content.Context
 import androidx.room.*
 
-@Database(entities =  [(Beer::class), (Review::class)], version = 2, exportSchema = false)
+@Database(entities =  [(Beer::class), (Review::class)], version = 4, exportSchema = false)
 abstract class BeerDB: RoomDatabase() {
     abstract fun beerDao(): BeerDao
 

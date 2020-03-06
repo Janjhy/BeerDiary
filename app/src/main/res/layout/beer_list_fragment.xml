@@ -1,11 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     android:orientation="vertical"
     android:id="@+id/fragmentList"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".BeerListFragment">
+    android:layout_height="match_parent">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -19,22 +17,6 @@
             android:layout_weight="0.5">
 
         </androidx.recyclerview.widget.RecyclerView>
-
-        <EditText
-            android:id="@+id/edit_name"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight=".05"
-            android:hint="Enter name of beer"
-            android:inputType="text" />
-
-        <EditText
-            android:id="@+id/edit_brewer"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight=".05"
-            android:hint="Enter brewery of beer"
-            android:inputType="text" />
 
         <Button
             android:id="@+id/btn_addBeer"
