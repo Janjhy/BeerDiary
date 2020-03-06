@@ -1,7 +1,19 @@
 <resources>
-    <string name="app_name">AndroidDB</string>
+    <string name="app_name">BeerDiary</string>
     <string name="add_a_beer">Add a Beer!</string>
     <string name="no_beer_name">unknown</string>
     <string name="score">Score</string>
     <string name="beer_image">Image of beer if taken</string>
+    <string name="enter_name_of_beer">Enter name of beer</string>
+    <string name="enter_brewery_of_beer">Enter brewery of beer</string>
+    <string name="brewer">brewer</string>
+    <string name="beer_name">beer name</string>
+    <string name="beer_comment">beer comment</string>
+    <string name="add">Add</string>
+    <string name="beer_score">beer score</string>
+    <string name="click_to_edit_comment">Click to edit comment.</string>
+    <string name="image_of_beer">Image of beer</string>
+    <string name="add_as_location">Add as location</string>
+    <string name="edit">Edit</string>
+    <string name="card_beer_score">%1$.1f/5</string>
 </resources>
