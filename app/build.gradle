@@ -6,6 +6,10 @@ apply plugin: 'kotlin-android-extensions'
 
 apply plugin: "kotlin-kapt"
 
+def apikeyFile = rootProject.file("some.txt")
+def apikey = new Properties()
+apikey.load(new FileInputStream(apikeyFile))
+
 
 android {
     compileSdkVersion 29
@@ -16,6 +20,7 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        resValue("string", "apikey", apikey['apikey'])
     }
     buildTypes {
         release {
