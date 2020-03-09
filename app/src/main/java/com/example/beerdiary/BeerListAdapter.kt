@@ -34,6 +34,7 @@ class BeerListAdapter(private val items: List<BeerAndReviews>, private val conte
         val angle = rotateImageAngle(orientation)
         holder.beerImage.rotation = angle.toFloat()
         holder.beerImage.setImageBitmap(imageBitmap)
+        holder.beerBrewer.text = item.beer?.brewer
     }
 
     override fun getItemCount(): Int {
@@ -60,4 +61,5 @@ class ViewHolder (view: View) : RecyclerView.ViewHolder(view) {
     val beerName: TextView = view.beerName
     val cardScore: TextView = view.cardScore
     val beerImage: ImageView = view.beerImage
+    val beerBrewer: TextView = view.beerBrewery
 }

@@ -5,6 +5,12 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_height=""
+        android:layout_width="">
+
+    </com.google.android.material.textfield.TextInputLayout>
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -15,7 +21,6 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="0.5">
-
         </androidx.recyclerview.widget.RecyclerView>
 
         <Button
@@ -24,6 +29,7 @@
             android:layout_height="0dp"
             android:layout_weight="0.05"
             android:text="@string/add_a_beer" />
+
     </LinearLayout>
 
 </FrameLayout>
