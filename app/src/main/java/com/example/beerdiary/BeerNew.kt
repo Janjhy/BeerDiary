@@ -177,8 +177,6 @@ class BeerNew : AppCompatActivity() {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == Activity.RESULT_OK) {
             val mCurrentPhotoPath = imageFile!!.absolutePath
-            //val extras = data!!.extras
-            //val imageBitmap = extras!!.get("data") as Bitmap
 
             val imageBitmapNext = BitmapFactory.decodeFile(mCurrentPhotoPath)
             val exif = ExifInterface(mCurrentPhotoPath)

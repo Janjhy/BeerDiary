@@ -2,6 +2,8 @@ package com.example.beerdiary
 
 import android.content.Context
 import android.content.pm.PackageManager
+import android.graphics.BitmapFactory
+import android.media.ExifInterface
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -156,6 +158,24 @@ class FragmentBeerInfo : Fragment(), OnMapReadyCallback {
             beer_brewer.text = beerAndReview.beer?.brewer
             beer_score_bar.rating = beerAndReview.review!!.score
             beer_comment.text = beerAndReview.review?.comment
+
+            val mCurrentPhotoPath = beerAndReview.beer?.imagePath
+            val imageBitmap = BitmapFactory.decodeFile(mCurrentPhotoPath)
+            imageView_info.setImageBitmap(imageBitmap)
+            val exif = ExifInterface(mCurrentPhotoPath)
+            val orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, 1)
+            val angle = rotateImageAngle(orientation)
+            imageView_info.rotation = angle.toFloat()
+        }
+    }
+
+    private fun rotateImageAngle(orientation: Int): Int {
+        Log.d("exif", "orientation is $orientation")
+        return when(orientation) {
+            3, 4 -> 180
+            5, 6 -> 90
+            7, 8 -> 270
+            else -> 0
         }
     }
 }
