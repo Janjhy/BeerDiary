@@ -16,4 +16,8 @@
     <string name="add_as_location">Add as location</string>
     <string name="edit">Edit</string>
     <string name="card_beer_score">%1$.1f/5</string>
+    <string name="beer_size_oz">%1$.1f FL OZ</string>
+    <string name="beer_size_placeholder">Beer size</string>
+    <string name="beer_size_ml">%1$.0f ml</string>
+    <string name="confirm">Confirm</string>
 </resources>

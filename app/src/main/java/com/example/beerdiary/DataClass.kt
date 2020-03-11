@@ -8,7 +8,8 @@ data class Beer(
     @ColumnInfo(name = "beer_id") val beerId: Long,
     @ColumnInfo(name = "beer_name") val beerName: String,
     @ColumnInfo(name = "beer_brewer") val brewer: String,
-    @ColumnInfo(name = "beer_image_path") val imagePath: String
+    @ColumnInfo(name = "beer_image_path") val imagePath: String,
+    @ColumnInfo(name = "beer_size") val beerSize: Double
 )
 
 @Entity(

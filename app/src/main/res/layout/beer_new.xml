@@ -39,35 +39,54 @@
                 android:layout_width="0dp"
                 android:layout_height="0dp"
                 android:hint="@string/beer_name"
-                app:layout_constraintBottom_toTopOf="@+id/et_beer_brewer"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.5"
-                app:layout_constraintStart_toStartOf="@+id/guideline2"
-                app:layout_constraintTop_toTopOf="parent"
+                android:imeOptions="actionDone"
                 android:importantForAutofill="no"
                 android:inputType="text"
-                android:imeOptions="actionDone"/>
+                app:layout_constraintBottom_toTopOf="@+id/et_beer_brewer"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="@+id/guideline2"
+                app:layout_constraintTop_toTopOf="parent" />
 
             <EditText
                 android:id="@+id/et_beer_brewer"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
                 android:hint="@string/brewer"
-                app:layout_constraintBottom_toTopOf="@+id/guideline"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.498"
-                app:layout_constraintStart_toStartOf="@+id/guideline2"
-                app:layout_constraintTop_toBottomOf="@+id/et_beer_name"
+                android:imeOptions="actionDone"
                 android:importantForAutofill="no"
                 android:inputType="text"
-                android:imeOptions="actionDone"/>
+                app:layout_constraintBottom_toTopOf="@+id/beer_size_dropdown"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/imageView_new"
+                app:layout_constraintTop_toBottomOf="@+id/et_beer_name" />
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/beer_size_dropdown"
+                style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox.ExposedDropdownMenu"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                app:layout_constraintBottom_toTopOf="@+id/guideline"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="@+id/guideline2"
+                app:layout_constraintTop_toBottomOf="@+id/et_beer_brewer">
+
+                <AutoCompleteTextView
+                    android:id="@+id/filled_exposed_dropdown"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:editable="false"/>
+
+            </com.google.android.material.textfield.TextInputLayout>
 
             <TextView
                 android:id="@+id/beer_score_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginBottom="39dp"
                 android:text="@string/beer_score"
-                app:layout_constraintEnd_toStartOf="@+id/guideline2"
+                app:layout_constraintBottom_toTopOf="@+id/mapView_new"
+                app:layout_constraintEnd_toStartOf="@+id/beer_score_bar"
+                app:layout_constraintHorizontal_bias="0.395"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="@+id/guideline" />
 
@@ -80,7 +99,7 @@
                 android:stepSize="0.5"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/beer_score_text" />
+                app:layout_constraintTop_toTopOf="@+id/guideline" />
 
             <org.osmdroid.views.MapView
                 android:id="@+id/mapView_new"
@@ -97,13 +116,13 @@
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:hint="@string/beer_comment"
+                android:imeOptions="actionDone"
+                android:importantForAutofill="no"
+                android:inputType="text"
                 app:layout_constraintBottom_toTopOf="@+id/guideline4"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/mapView"
-                android:importantForAutofill="no"
-                android:inputType="text"
-                android:imeOptions="actionDone"/>
+                app:layout_constraintTop_toBottomOf="@+id/mapView_new" />
 
             <androidx.constraintlayout.widget.Guideline
                 android:id="@+id/guideline2"

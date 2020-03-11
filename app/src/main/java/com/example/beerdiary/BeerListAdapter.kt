@@ -11,8 +11,6 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.android.synthetic.main.beer_card.view.*
-import kotlinx.android.synthetic.main.beer_item.view.*
-import kotlinx.android.synthetic.main.beer_item.view.beerName
 
 class BeerListAdapter(private val items: List<BeerAndReviews>, private val context: Context, private val listener: BeerListFragment.BeerFragmentListener) : RecyclerView.Adapter<ViewHolder>() {
 
@@ -61,8 +59,5 @@ class ViewHolder (view: View) : RecyclerView.ViewHolder(view) {
     val beerName: TextView = view.beerName
     val cardScore: TextView = view.cardScore
     val beerImage: ImageView = view.beerImage
-<<<<<<< HEAD
-=======
     val beerBrewer: TextView = view.beerBrewery
->>>>>>> cfae009a9c3d934f6debfeabf6f2d9ca8baa5df8
 }

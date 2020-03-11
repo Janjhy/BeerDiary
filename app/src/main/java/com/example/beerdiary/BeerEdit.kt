@@ -19,42 +19,42 @@ import android.preference.PreferenceManager
 import android.provider.MediaStore
 import android.util.Log
 import android.view.View
-import android.widget.AdapterView
-import android.widget.ArrayAdapter
-import android.widget.AutoCompleteTextView
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
+import com.google.android.gms.maps.MapView
 import com.google.android.gms.tasks.Task
 import kotlinx.android.synthetic.main.beer_new.*
 import org.osmdroid.config.Configuration
+import org.osmdroid.events.MapEventsReceiver
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
+import org.osmdroid.views.overlay.MapEventsOverlay
 import org.osmdroid.views.overlay.Marker
 import java.io.File
 
-class BeerNew : AppCompatActivity() {
+class BeerEdit: AppCompatActivity(), MapEventsReceiver {
 
-    //private lateinit var locationManager: LocationManager
-    private lateinit var location: Location
+    private var latitude: Double = 0.0
+    private var longitude: Double = 0.0
+    private lateinit var marker: Marker
     private val REQUEST_IMAGE_CAPTURE = 1
-    private val REQUEST_CHECK_SETTINGS = 2
     private var imageFile: File? = null
-    private lateinit var fusedLocationClient: FusedLocationProviderClient
-    private lateinit var request: LocationRequest
-    private lateinit var locationCallback: LocationCallback
-    private var gettingLocation = false
     private val sizeItems: Array<Double> = arrayOf(250.0, 330.0, 355.0, 400.0, 500.0, 568.0)
     private var pickedSize: Double = 0.0
+    private var beerID: Long = 0
+    private var reviewID: Long = 0
+    private lateinit var arrayAdapter: ArrayAdapter<Double>
+    private lateinit var filledExposedDropdown: AutoCompleteTextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        beerID = intent.getLongExtra("BEER_ID", 0)
 
-        //locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
         if ((ContextCompat.checkSelfPermission(
                 this,
@@ -73,95 +73,29 @@ class BeerNew : AppCompatActivity() {
         Configuration.getInstance()
             .load(contxt, PreferenceManager.getDefaultSharedPreferences(contxt))
 
-
         setContentView(R.layout.beer_new)
         mapView_new.setTileSource(TileSourceFactory.MAPNIK)
-
-        createLocationRequest()
-
-        val builder = LocationSettingsRequest.Builder().addLocationRequest(request)
-
-        val client: SettingsClient = LocationServices.getSettingsClient(this)
-        val task: Task<LocationSettingsResponse> = client.checkLocationSettings(builder.build())
-
-        task.addOnSuccessListener {
-            fusedLocationClient.lastLocation.addOnSuccessListener {
-                location = it
-                Log.d("location", it.toString())
-            }
-        }
-
-        task.addOnFailureListener {
-                exception ->
-            if(exception is ResolvableApiException) {
-                try {
-                    exception.startResolutionForResult(this, REQUEST_CHECK_SETTINGS)
-                } catch (sendException: IntentSender.SendIntentException) {
-
-                }
-            }
-        }
-
-        locationCallback = object : LocationCallback() {
-            override fun onLocationResult(result: LocationResult?) {
-                result ?: return
-                for (locationTemp in result.locations) {
-                    location = locationTemp
-                    makeUseOfNewLocation()
-                }
-            }
-        }
-        beginLocationUpdates()
-        //location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
-
-        //mapView_new.controller.setCenter(GeoPoint(location.latitude, location.longitude))
-        mapView_new.controller.setZoom(15.0)
-        //newMarker()
 
         imageView_new.setOnLongClickListener() {
             Log.d("click", "long click")
             savePhotoIntent()
             true
         }
-
+        setUp()
+        marker = Marker(mapView_new)
         btn_add.setOnClickListener {
-            add()
+            update()
         }
 
+        val mapEventsOverlay = MapEventsOverlay(this, this)
+        mapView_new.overlays.add(0, mapEventsOverlay)
+        mapView_new.controller.setZoom(15.0)
+
         //Setup dropdown menu
-        val arrayAdapter = ArrayAdapter(this, R.layout.size_dropdown_popup_item, sizeItems)
-        val filledExposedDropdown =  this.findViewById<AutoCompleteTextView>(R.id.filled_exposed_dropdown)
+        arrayAdapter = ArrayAdapter(this, R.layout.size_dropdown_popup_item, sizeItems)
+        filledExposedDropdown =  this.findViewById(R.id.filled_exposed_dropdown)
         filledExposedDropdown.setAdapter(arrayAdapter)
         filledExposedDropdown.setOnItemClickListener { parent, view, position, id ->  onSizeSelected(parent, view, position, id)}
-
-/*      val locationListener = object : LocationListener {
-          override fun onLocationChanged(location: Location) {
-              makeUseOfNewLocation(location)
-          }
-
-          override fun onStatusChanged(provider: String, status: Int, extras: Bundle) {
-              Log.d("location", "onStatusChanged")
-          }
-
-          override fun onProviderEnabled(provider: String) {
-          }
-
-          override fun onProviderDisabled(provider: String) {
-          }
-      }
-
-      locationManager.requestLocationUpdates(
-          LocationManager.NETWORK_PROVIDER,
-          5000,
-          5f,
-          locationListener
-      )
-      locationManager.requestLocationUpdates(
-          LocationManager.GPS_PROVIDER,
-          5000,
-          5f,
-          locationListener
-      )*/
     }
 
     private fun onSizeSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
@@ -169,13 +103,44 @@ class BeerNew : AppCompatActivity() {
         pickedSize = sizeItems[position]
     }
 
-    private fun add() {
+    private fun setUp() {
+        Thread(Runnable {
+            val beerAndReview = BeerDB.get(applicationContext).beerDao().getBeerAndReview(beerID)
+            val reviewTemp = beerAndReview.review
+            val beerTemp = beerAndReview.beer
+            val photoPath = beerTemp?.imagePath
+            imageFile = File(photoPath)
+            val imageBitmap = BitmapFactory.decodeFile(photoPath)
+            val exif = ExifInterface(photoPath)
+            val orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, 1)
+            val angle = rotateImageAngle(orientation)
+            latitude = reviewTemp?.latitude!!
+            longitude = reviewTemp.longitude
+            pickedSize = beerTemp?.beerSize!!
+            btn_add.text = getString(R.string.confirm)
+            reviewID = reviewTemp.reviewId
+
+            runOnUiThread {
+                et_beer_name.setText(beerTemp?.beerName, TextView.BufferType.EDITABLE)
+                et_beer_comment.setText(reviewTemp?.comment, TextView.BufferType.EDITABLE)
+                et_beer_brewer.setText(beerTemp?.brewer, TextView.BufferType.EDITABLE)
+                beer_score_bar.rating = reviewTemp?.score!!
+                filledExposedDropdown.hint = beerTemp?.beerSize?.toInt().toString() + " ml"
+                imageView_new.rotation = angle.toFloat()
+                imageView_new.setImageBitmap(imageBitmap)
+                newMarker()
+            }
+        }).start()
+    }
+
+    private fun update() {
         val beerName = et_beer_name.text.toString()
         val brewerName = et_beer_brewer.text.toString()
         val comment = et_beer_comment.text.toString()
         val score = beer_score_bar.rating
-        val lat = location.latitude
-        val long = location.longitude
+        Log.d("on update location","$latitude and $longitude")
+        val lat = latitude
+        val long = longitude
         if(pickedSize < 250.0) {
             Log.d("insert", "no size")
             return
@@ -187,14 +152,13 @@ class BeerNew : AppCompatActivity() {
         }
         val image = imageFile
         val path = image!!.absolutePath
-        Log.d("info", "name and brewer $beerName $brewerName")
-        val beer = Beer(0, beerName, brewerName, path, size)
         val db = BeerDB.get(this)
-        var id: Long = 0
-
+        val id: Long = beerID
+        val beer = Beer(id, beerName, brewerName, path, size)
+        val review = Review(reviewID, score, comment, id, lat, long)
         val firstThread = Thread(Runnable {
             //db.clearAllTables()
-            id = db.beerDao().insertBeer(beer)
+            db.beerDao().updateBeer(beer, review)
 
             Log.d("insert", "inserted beer id: $id")
 
@@ -203,7 +167,7 @@ class BeerNew : AppCompatActivity() {
             }
         })
         firstThread.start()
-        firstThread.join()
+        /*firstThread.join()
         val review = Review(0, score, comment, id, lat, long)
         val secondThread = Thread(Runnable {
             val reviewid = db.beerDao().insertReview(review)
@@ -213,53 +177,16 @@ class BeerNew : AppCompatActivity() {
                 Log.d("contents", "beer and review  " + (db.beerDao().getBeersAndReviewsR()))
             }
         })
-        secondThread.start()
+        secondThread.start()*/
         finish()
     }
 
-    override fun onResume() {
-        super.onResume()
-        if(!gettingLocation) beginLocationUpdates()
-    }
-
-    private fun createLocationRequest() {
-        request = LocationRequest.create().apply {
-            interval = 15000
-            fastestInterval = 5000
-            priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-        }
-    }
-
-    private fun beginLocationUpdates() {
-        fusedLocationClient.requestLocationUpdates(
-            request,
-            locationCallback,
-            Looper.getMainLooper()
-        )
-        gettingLocation = true
-    }
-
-    private fun endLocationUpdates() {
-        fusedLocationClient.removeLocationUpdates(locationCallback)
-        gettingLocation = false
-    }
-
-    override fun onPause() {
-        super.onPause()
-        endLocationUpdates()
-    }
-
     private fun newMarker() {
-        mapView_new.overlays.clear()
-        val marker = Marker(mapView_new)
-        marker.position = GeoPoint(location.latitude, location.longitude)
+        mapView_new.overlays.remove(marker)
+        marker.position = GeoPoint(latitude, longitude)
         marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
         mapView_new.overlays.add(marker)
-    }
-
-    private fun makeUseOfNewLocation() {
-        mapView_new.controller.setCenter(GeoPoint(location.latitude, location.longitude))
-        newMarker()
+        mapView_new.controller.setCenter(GeoPoint(latitude, longitude))
     }
 
     private fun savePhotoIntent() {
@@ -292,8 +219,6 @@ class BeerNew : AppCompatActivity() {
             val angle = rotateImageAngle(orientation)
             imageView_new.setImageBitmap(imageBitmapNext)
             imageView_new.rotation = angle.toFloat()
-            val imageBitmap1 = Bitmap.createScaledBitmap(imageBitmapNext, 128, 128, false)
-            //imageView_new.setImageBitmap(imageBitmap1)
         }
     }
 
@@ -305,6 +230,19 @@ class BeerNew : AppCompatActivity() {
             7, 8 -> 270
             else -> 0
         }
+    }
+
+    override fun longPressHelper(p: GeoPoint?): Boolean {
+        return false
+    }
+
+    override fun singleTapConfirmedHelper(p: GeoPoint?): Boolean {
+        Log.d("tapped", "at ${p?.latitude} ${p?.longitude}" )
+        latitude = p?.latitude!!
+        longitude = p.longitude
+        Log.d("on tap result","$latitude and $longitude")
+        newMarker()
+        return true;
     }
 }
 

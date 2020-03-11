@@ -8,6 +8,9 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
+import android.widget.AutoCompleteTextView
 import android.widget.Button
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
@@ -26,6 +29,10 @@ class BeerListFragment : Fragment() {
 
     private var listener: BeerFragmentListener? = null
 
+    private lateinit var ump: BeerModel
+
+    private val sortItems: Array<String> = arrayOf("Name", "Brewer", "Score")
+
     interface BeerFragmentListener {
         fun onButtonClick(position: Int)
     }
@@ -39,9 +46,7 @@ class BeerListFragment : Fragment() {
         } else {
             throw RuntimeException("$context must implement BeerFragmentListener")
         }
-
     }
-
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -51,19 +56,35 @@ class BeerListFragment : Fragment() {
         val activity = activity as Context
         mList = view.findViewById(R.id.beer_list)
         mList.layoutManager = LinearLayoutManager(context)
-        val ump = ViewModelProviders.of(this).get(BeerModel::class.java)
+
+        //Setup livedata and adapter
+        ump = ViewModelProviders.of(this).get(BeerModel::class.java)
         ump.getBeers().observe(this, Observer {
             mList.adapter =
                 listener?.let { it1 -> BeerListAdapter(it, activity, it1) }
         })
         setAdapter()
+
         mList.itemAnimator = DefaultItemAnimator()
+
+        //Setup add item button
         val buttonAdd = view.findViewById<Button>(R.id.btn_addBeer)
         buttonAdd.setOnClickListener {
             val intent = Intent(activity, BeerNew::class.java)
             startActivity(intent)
         }
+
+        //Setup dropdown menu
+        val arrayAdapter = getActivity()?.applicationContext?.let { ArrayAdapter(it, R.layout.sort_dropdown_pop_item, sortItems) }
+        val filledExposedDropdown = view.findViewById<AutoCompleteTextView>(R.id.filled_exposed_dropdown)
+        filledExposedDropdown.setAdapter(arrayAdapter)
+        filledExposedDropdown.setOnItemClickListener { parent, view, position, id ->  onSortSelected(parent, view, position, id)}
         return view
+    }
+
+    private fun onSortSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+        Log.d("dropdown", sortItems[position])
+        ump.sortBeers(sortItems[position])
     }
 
     private fun setAdapter() {

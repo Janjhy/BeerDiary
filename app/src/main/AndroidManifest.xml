@@ -33,7 +33,11 @@
         <activity
             android:name=".BeerNew"
             android:parentActivityName=".MainActivity">
+        </activity>
 
+        <activity
+            android:name=".BeerEdit"
+            android:parentActivityName=".MainActivity">
         </activity>
 
         <provider
