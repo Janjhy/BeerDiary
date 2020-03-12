@@ -6,7 +6,7 @@ apply plugin: 'kotlin-android-extensions'
 
 apply plugin: "kotlin-kapt"
 
-def apikeyFile = rootProject.file("some.txt")
+def apikeyFile = rootProject.file("someKey.txt")
 def apikey = new Properties()
 apikey.load(new FileInputStream(apikeyFile))
 

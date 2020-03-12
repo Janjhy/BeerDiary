@@ -12,7 +12,7 @@
 /captures
 .externalNativeBuild
 .cxx
-/some.txt
-/some
-some
-some.txt
+/someKey.txt
+/someKey
+someKey
+someKey.txt
