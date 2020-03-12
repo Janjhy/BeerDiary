@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/view_new_beer"
@@ -74,9 +74,44 @@
                     android:id="@+id/filled_exposed_dropdown"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:editable="false"/>
+                    android:editable="false"
+                    android:hint="@string/beer_size_placeholder" />
 
             </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/beer_type_dropdown"
+                style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox.ExposedDropdownMenu"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                app:layout_constraintEnd_toStartOf="@+id/et_beer_strength"
+                app:layout_constraintHorizontal_bias="0.5"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/guideline">
+
+                <AutoCompleteTextView
+                    android:id="@+id/type_exposed_dropdown"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:editable="false"
+                    android:hint="@string/beer_type" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <EditText
+                android:id="@+id/et_beer_strength"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:digits="0123456789."
+                android:hint="@string/alcohol_by_volume"
+                android:imeOptions="actionDone"
+                android:importantForAutofill="no"
+                android:inputType="numberDecimal"
+                app:layout_constraintBottom_toTopOf="@+id/beer_score_bar"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.5"
+                app:layout_constraintStart_toEndOf="@+id/beer_type_dropdown"
+                app:layout_constraintTop_toTopOf="@+id/guideline" />
 
             <TextView
                 android:id="@+id/beer_score_text"
@@ -88,7 +123,7 @@
                 app:layout_constraintEnd_toStartOf="@+id/beer_score_bar"
                 app:layout_constraintHorizontal_bias="0.395"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="@+id/guideline" />
+                app:layout_constraintTop_toBottomOf="@+id/beer_type_dropdown" />
 
             <RatingBar
                 android:id="@+id/beer_score_bar"
@@ -97,9 +132,10 @@
                 android:numStars="5"
                 android:rating="2.5"
                 android:stepSize="0.5"
+                app:layout_constraintBottom_toTopOf="@id/mapView_new"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="@+id/guideline" />
+                app:layout_constraintTop_toBottomOf="@+id/beer_type_dropdown" />
 
             <org.osmdroid.views.MapView
                 android:id="@+id/mapView_new"
@@ -143,14 +179,14 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                app:layout_constraintGuide_percent="0.68" />
+                app:layout_constraintGuide_percent="0.78" />
 
             <androidx.constraintlayout.widget.Guideline
                 android:id="@+id/guideline4"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                app:layout_constraintGuide_percent="0.85" />
+                app:layout_constraintGuide_percent="0.89" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </ScrollView>
@@ -160,8 +196,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/add"
-        app:layout_constraintBottom_toBottomOf="@+id/main_ll"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        android:layout_gravity="bottom" />
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -20,4 +20,8 @@
     <string name="beer_size_placeholder">Beer size</string>
     <string name="beer_size_ml">%1$.0f ml</string>
     <string name="confirm">Confirm</string>
+    <string name="alcohol_by_volume">Alcohol by volume (%)</string>
+    <string name="beer_type">Beer type</string>
+    <string name="cancel">Cancel</string>
+    <string name="beer_strength_format">%1$.1f%</string>
 </resources>

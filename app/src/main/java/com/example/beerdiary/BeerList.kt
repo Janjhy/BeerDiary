@@ -4,20 +4,18 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.*
 import androidx.fragment.app.Fragment
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
-import android.widget.Button
+import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-
+import kotlinx.android.synthetic.main.beer_list_fragment.*
 
 class BeerListFragment : Fragment() {
 
@@ -28,16 +26,13 @@ class BeerListFragment : Fragment() {
     }
 
     private var listener: BeerFragmentListener? = null
-
+    private lateinit var mList: RecyclerView
     private lateinit var ump: BeerModel
-
     private val sortItems: Array<String> = arrayOf("Name", "Brewer", "Score")
 
     interface BeerFragmentListener {
         fun onButtonClick(position: Int)
     }
-
-    private lateinit var mList: RecyclerView
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
@@ -67,12 +62,14 @@ class BeerListFragment : Fragment() {
 
         mList.itemAnimator = DefaultItemAnimator()
 
+        setHasOptionsMenu(true)
+
         //Setup add item button
-        val buttonAdd = view.findViewById<Button>(R.id.btn_addBeer)
+        /*val buttonAdd = view.findViewById<Button>(R.id.btn_addBeer)
         buttonAdd.setOnClickListener {
             val intent = Intent(activity, BeerNew::class.java)
             startActivity(intent)
-        }
+        }*/
 
         //Setup dropdown menu
         val arrayAdapter = getActivity()?.applicationContext?.let { ArrayAdapter(it, R.layout.sort_dropdown_pop_item, sortItems) }
@@ -80,6 +77,33 @@ class BeerListFragment : Fragment() {
         filledExposedDropdown.setAdapter(arrayAdapter)
         filledExposedDropdown.setOnItemClickListener { parent, view, position, id ->  onSortSelected(parent, view, position, id)}
         return view
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        val activity = (requireActivity() as AppCompatActivity)
+        activity.setSupportActionBar(bar_list)
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        super.onCreateOptionsMenu(menu, inflater)
+        inflater.inflate(R.menu.list_bottom_menu, menu)
+        Log.d("inflate", "menu inflated")
+        bar_list.setOnMenuItemClickListener { item ->
+            when(item.itemId) {
+                R.id.app_bar_add -> {
+                    val intent = Intent(activity, BeerNew::class.java)
+                    startActivity(intent)
+                    true
+                }
+                R.id.app_bar_map -> {
+                    val intent = Intent(activity, LocationAll::class.java)
+                    startActivity(intent)
+                    true
+                }
+                else -> false
+            }
+        }
     }
 
     private fun onSortSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {

@@ -28,6 +28,7 @@ import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.MapView
 import com.google.android.gms.tasks.Task
+import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.beer_new.*
 import org.osmdroid.config.Configuration
 import org.osmdroid.events.MapEventsReceiver
@@ -36,6 +37,8 @@ import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.overlay.MapEventsOverlay
 import org.osmdroid.views.overlay.Marker
 import java.io.File
+import java.math.BigDecimal
+import java.math.RoundingMode
 
 class BeerEdit: AppCompatActivity(), MapEventsReceiver {
 
@@ -44,29 +47,19 @@ class BeerEdit: AppCompatActivity(), MapEventsReceiver {
     private lateinit var marker: Marker
     private val REQUEST_IMAGE_CAPTURE = 1
     private var imageFile: File? = null
-    private val sizeItems: Array<Double> = arrayOf(250.0, 330.0, 355.0, 400.0, 500.0, 568.0)
     private var pickedSize: Double = 0.0
     private var beerID: Long = 0
     private var reviewID: Long = 0
     private lateinit var arrayAdapter: ArrayAdapter<Double>
     private lateinit var filledExposedDropdown: AutoCompleteTextView
+    private lateinit var typeExposedDropdown: AutoCompleteTextView
+    private var pickedType: String = ""
+    private lateinit var typesArray: Array<String>
+    private lateinit var path: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         beerID = intent.getLongExtra("BEER_ID", 0)
-
-
-        if ((ContextCompat.checkSelfPermission(
-                this,
-                android.Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED)
-        ) {
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION),
-                0
-            )
-        }
 
         val contxt = applicationContext
 
@@ -96,6 +89,20 @@ class BeerEdit: AppCompatActivity(), MapEventsReceiver {
         filledExposedDropdown =  this.findViewById(R.id.filled_exposed_dropdown)
         filledExposedDropdown.setAdapter(arrayAdapter)
         filledExposedDropdown.setOnItemClickListener { parent, view, position, id ->  onSizeSelected(parent, view, position, id)}
+
+        //Setup type dropdown menu
+        typesArray = beerTypes.keys.toTypedArray()
+        val arrayAdapterType = ArrayAdapter(this, R.layout.type_dropdown_pop_item, typesArray)
+        typeExposedDropdown =  this.findViewById(R.id.type_exposed_dropdown)
+        typeExposedDropdown.setAdapter(arrayAdapterType)
+        beer_size_dropdown.hint = ""
+        beer_type_dropdown.hint = ""
+
+        typeExposedDropdown.setOnItemClickListener { parent, view, position, id ->  onTypeSelected(parent, view, position, id)}
+    }
+
+    private fun onTypeSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+        pickedType = typesArray[position]
     }
 
     private fun onSizeSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
@@ -103,12 +110,19 @@ class BeerEdit: AppCompatActivity(), MapEventsReceiver {
         pickedSize = sizeItems[position]
     }
 
+    private fun getBeer(): BeerAndReviews {
+        return BeerDB.get(applicationContext).beerDao().getBeerAndReview(beerID)
+    }
+
     private fun setUp() {
         Thread(Runnable {
-            val beerAndReview = BeerDB.get(applicationContext).beerDao().getBeerAndReview(beerID)
+            val beerAndReview = getBeer()
             val reviewTemp = beerAndReview.review
             val beerTemp = beerAndReview.beer
             val photoPath = beerTemp?.imagePath
+            if (photoPath != null) {
+                path = photoPath
+            }
             imageFile = File(photoPath)
             val imageBitmap = BitmapFactory.decodeFile(photoPath)
             val exif = ExifInterface(photoPath)
@@ -119,13 +133,16 @@ class BeerEdit: AppCompatActivity(), MapEventsReceiver {
             pickedSize = beerTemp?.beerSize!!
             btn_add.text = getString(R.string.confirm)
             reviewID = reviewTemp.reviewId
+            pickedType = beerTemp.beerType
 
             runOnUiThread {
                 et_beer_name.setText(beerTemp?.beerName, TextView.BufferType.EDITABLE)
                 et_beer_comment.setText(reviewTemp?.comment, TextView.BufferType.EDITABLE)
                 et_beer_brewer.setText(beerTemp?.brewer, TextView.BufferType.EDITABLE)
+                et_beer_strength.setText(beerTemp?.beerStrength.toString(), TextView.BufferType.EDITABLE)
                 beer_score_bar.rating = reviewTemp?.score!!
                 filledExposedDropdown.hint = beerTemp?.beerSize?.toInt().toString() + " ml"
+                typeExposedDropdown.hint = beerTemp?.beerType
                 imageView_new.rotation = angle.toFloat()
                 imageView_new.setImageBitmap(imageBitmap)
                 newMarker()
@@ -134,30 +151,26 @@ class BeerEdit: AppCompatActivity(), MapEventsReceiver {
     }
 
     private fun update() {
+        if(!validate()) {
+            return
+        }
         val beerName = et_beer_name.text.toString()
         val brewerName = et_beer_brewer.text.toString()
         val comment = et_beer_comment.text.toString()
         val score = beer_score_bar.rating
-        Log.d("on update location","$latitude and $longitude")
+        val strengthTemp = et_beer_strength.text.toString().toDouble()
+        val strength = BigDecimal(strengthTemp).setScale(1, RoundingMode.HALF_EVEN).toDouble()
         val lat = latitude
         val long = longitude
-        if(pickedSize < 250.0) {
-            Log.d("insert", "no size")
-            return
-        }
         val size = pickedSize
-        if (imageFile == null) {
-            Log.d("insert", "no image")
-            return
-        }
+        val type = pickedType
         val image = imageFile
         val path = image!!.absolutePath
         val db = BeerDB.get(this)
         val id: Long = beerID
-        val beer = Beer(id, beerName, brewerName, path, size)
+        val beer = Beer(id, beerName, brewerName, path, size, type, strength)
         val review = Review(reviewID, score, comment, id, lat, long)
         val firstThread = Thread(Runnable {
-            //db.clearAllTables()
             db.beerDao().updateBeer(beer, review)
 
             Log.d("insert", "inserted beer id: $id")
@@ -167,17 +180,6 @@ class BeerEdit: AppCompatActivity(), MapEventsReceiver {
             }
         })
         firstThread.start()
-        /*firstThread.join()
-        val review = Review(0, score, comment, id, lat, long)
-        val secondThread = Thread(Runnable {
-            val reviewid = db.beerDao().insertReview(review)
-            Log.d("insert", "inserted review id: $reviewid")
-            Log.d("contents", "review  " + (db.beerDao().getReviews()))
-            if (db != null) {
-                Log.d("contents", "beer and review  " + (db.beerDao().getBeersAndReviewsR()))
-            }
-        })
-        secondThread.start()*/
         finish()
     }
 
@@ -211,7 +213,6 @@ class BeerEdit: AppCompatActivity(), MapEventsReceiver {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == Activity.RESULT_OK) {
             val mCurrentPhotoPath = imageFile!!.absolutePath
-
             val imageBitmapNext = BitmapFactory.decodeFile(mCurrentPhotoPath)
             val exif = ExifInterface(mCurrentPhotoPath)
             val orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, 1)
@@ -219,6 +220,10 @@ class BeerEdit: AppCompatActivity(), MapEventsReceiver {
             val angle = rotateImageAngle(orientation)
             imageView_new.setImageBitmap(imageBitmapNext)
             imageView_new.rotation = angle.toFloat()
+        }
+        else if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == Activity.RESULT_CANCELED) {
+            Log.d("error", "result canceled")
+            imageFile = File(path)
         }
     }
 
@@ -243,6 +248,34 @@ class BeerEdit: AppCompatActivity(), MapEventsReceiver {
         Log.d("on tap result","$latitude and $longitude")
         newMarker()
         return true;
+    }
+
+    private fun validate(): Boolean {
+        if(et_beer_name.text.toString().trim().equals("", true)) {
+            et_beer_name.error = "Name can not be blank."
+            return false
+        }
+        if(et_beer_brewer.text.toString().trim().equals("", true)) {
+            et_beer_brewer.error = "Brewer can not be blank."
+            return false
+        }
+        if(pickedSize < 250.0) {
+            Snackbar.make(findViewById(R.id.view_new_beer), "Please pick a size.", Snackbar.LENGTH_SHORT).setAnchorView(R.id.btn_add).show()
+            return false
+        }
+        if (imageFile == null) {
+            Snackbar.make(findViewById(R.id.view_new_beer), "Please take a picture.", Snackbar.LENGTH_SHORT).setAnchorView(R.id.btn_add).show()
+            return false
+        }
+        if(et_beer_strength.text.toString().toDoubleOrNull() == null) {
+            et_beer_strength.error = "Value is not a valid number."
+            return false
+        }
+        if(pickedType == "") {
+            Snackbar.make(findViewById(R.id.view_new_beer), "Please pick a type.", Snackbar.LENGTH_SHORT).setAnchorView(R.id.btn_add).show()
+            return false
+        }
+        return true
     }
 }
 

@@ -9,7 +9,9 @@ data class Beer(
     @ColumnInfo(name = "beer_name") val beerName: String,
     @ColumnInfo(name = "beer_brewer") val brewer: String,
     @ColumnInfo(name = "beer_image_path") val imagePath: String,
-    @ColumnInfo(name = "beer_size") val beerSize: Double
+    @ColumnInfo(name = "beer_size") val beerSize: Double,
+    @ColumnInfo(name = "beer_type") val beerType: String,
+    @ColumnInfo(name = "beer_strength") val beerStrength: Double
 )
 
 @Entity(

@@ -32,11 +32,17 @@
 
         <activity
             android:name=".BeerNew"
-            android:parentActivityName=".MainActivity">
+            android:parentActivityName=".MainActivity"
+            android:windowSoftInputMode="adjustPan">
         </activity>
 
         <activity
             android:name=".BeerEdit"
+            android:parentActivityName=".MainActivity"
+            android:windowSoftInputMode="adjustPan">
+        </activity>
+
+        <activity android:name=".LocationAll"
             android:parentActivityName=".MainActivity">
         </activity>
 

@@ -2,24 +2,18 @@ package com.example.beerdiary
 
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
 import android.media.ExifInterface
 import android.os.Bundle
-import android.os.Parcelable
 import android.util.Log
 import android.view.*
-import androidx.appcompat.app.ActionBar
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.Toolbar
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.google.android.gms.maps.*
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
-import com.google.android.material.bottomappbar.BottomAppBar
-import kotlinx.android.parcel.Parcelize
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.android.synthetic.main.beer_review_info.*
 import kotlinx.android.synthetic.main.beer_review_info.beer_score_bar
 import retrofit2.Call
@@ -54,54 +48,14 @@ class FragmentBeerInfo : Fragment(), OnMapReadyCallback {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        //Thread(Runnable { getContent() }).start()
         val view = inflater.inflate(R.layout.beer_review_info, container, false)
-
-        if ((ContextCompat.checkSelfPermission(
-                activity!!.applicationContext,
-                android.Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED)
-        ) {
-            ActivityCompat.requestPermissions(
-                activity!!,
-                arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION),
-                0
-            )
-        }
 
         mapViewInfo = view.findViewById(R.id.mapView)
         mapViewInfo.onCreate(savedInstanceState)
         mapViewInfo.getMapAsync(this)
-        mapViewInfo.setOnLongClickListener() {
-            beerAndReview.review?.reviewId?.let { it1 -> FragmentLocation.newInstance(it1) }
-                ?.let { it2 ->
-                    activity?.supportFragmentManager?.beginTransaction()
-                        ?.replace(
-                            R.id.fragment_container,
-                            it2
-                        )
-                        ?.addToBackStack(null)?.commit()
-                }
-            true
-        }
         setHasOptionsMenu(true)
 
         return view
-    }
-
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
-        if ((ContextCompat.checkSelfPermission(
-                activity!!.applicationContext,
-                android.Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED)
-        ) {
-            ActivityCompat.requestPermissions(
-                activity!!,
-                arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION),
-                0
-            )
-        }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -117,12 +71,18 @@ class FragmentBeerInfo : Fragment(), OnMapReadyCallback {
         bar.setOnMenuItemClickListener { item ->
             when(item.itemId) {
                 R.id.app_bar_delete -> {
-                    Thread(Runnable { delete() }).start()
-                    activity?.supportFragmentManager?.popBackStack()
+                    activity?.let {
+                        MaterialAlertDialogBuilder(it).setTitle("Confirm deletion")
+                            .setMessage("This will remove the shown beer. This action is irreversible.")
+                            .setPositiveButton(R.string.confirm ) { _, _ ->  Thread(Runnable { delete() }).start()
+                                activity?.supportFragmentManager?.popBackStack()
+                            }
+                            .setNegativeButton(R.string.cancel) { _, _ ->
+                            }
+                    }?.show()
                     true
                 }
                 R.id.app_bar_edit -> {
-
                     val intent = Intent(activity, BeerEdit::class.java)
                     intent.putExtra("BEER_ID" , beerAndReview.beer?.beerId)
                     startActivity(intent)
@@ -137,6 +97,8 @@ class FragmentBeerInfo : Fragment(), OnMapReadyCallback {
         Log.d("bottombar", "pressed delete")
         context?.let { beerAndReview.beer?.let { it1 -> BeerDB.get(it).beerDao().deleteBeer(it1) } }
     }
+
+
 
     override fun onResume() {
         super.onResume()
@@ -163,8 +125,6 @@ class FragmentBeerInfo : Fragment(), OnMapReadyCallback {
     override fun onMapReady(gMap: GoogleMap?) {
         if (gMap != null) {
             mMap = gMap
-            //val googleMapOptions = GoogleMapOptions().liteMode(true)
-            //mMap.mapType = googleMapOptions.mapType
         }
     }
 
@@ -205,18 +165,20 @@ class FragmentBeerInfo : Fragment(), OnMapReadyCallback {
         val exif = ExifInterface(mCurrentPhotoPath)
         val orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, 1)
         val angle = rotateImageAngle(orientation)
+        val strength = beerAndReview.beer?.beerStrength
 
         this.activity?.runOnUiThread {
             beer_name.text = beerAndReview.beer?.beerName
             beer_brewer.text = beerAndReview.beer?.brewer
             beer_score_bar.rating = beerAndReview.review!!.score
             beer_comment.text = beerAndReview.review?.comment
-            beer_size.text =
-                activity?.applicationContext?.getString(R.string.beer_size_ml,
+            beer_size.text = activity?.applicationContext?.getString(R.string.beer_size_ml,
                     size
                 )
             imageView_info.setImageBitmap(imageBitmap)
             imageView_info.rotation = angle.toFloat()
+            beer_type.text = beerAndReview.beer?.beerType
+            beer_strength.text = "${strength.toString()}%"
             updateMap()
         }
     }

@@ -7,9 +7,11 @@ import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
 import android.location.Location
-import android.location.LocationListener
-import android.location.LocationManager
 import android.media.ExifInterface
 import android.net.Uri
 import android.os.Bundle
@@ -22,6 +24,7 @@ import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -29,16 +32,17 @@ import androidx.core.content.FileProvider
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
 import com.google.android.gms.tasks.Task
+import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.beer_new.*
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.overlay.Marker
 import java.io.File
+import java.math.BigDecimal
+import java.math.RoundingMode
 
-class BeerNew : AppCompatActivity() {
-
-    //private lateinit var locationManager: LocationManager
+class BeerNew : AppCompatActivity(), SensorEventListener {
     private lateinit var location: Location
     private val REQUEST_IMAGE_CAPTURE = 1
     private val REQUEST_CHECK_SETTINGS = 2
@@ -47,13 +51,16 @@ class BeerNew : AppCompatActivity() {
     private lateinit var request: LocationRequest
     private lateinit var locationCallback: LocationCallback
     private var gettingLocation = false
-    private val sizeItems: Array<Double> = arrayOf(250.0, 330.0, 355.0, 400.0, 500.0, 568.0)
     private var pickedSize: Double = 0.0
+    private var pickedType: String = ""
+    private lateinit var typesArray: Array<String>
+    private var goodPhoto: Boolean = false
+    private lateinit var light: Sensor
+    private lateinit var sensorManager: SensorManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        //locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
         if ((ContextCompat.checkSelfPermission(
@@ -72,7 +79,6 @@ class BeerNew : AppCompatActivity() {
 
         Configuration.getInstance()
             .load(contxt, PreferenceManager.getDefaultSharedPreferences(contxt))
-
 
         setContentView(R.layout.beer_new)
         mapView_new.setTileSource(TileSourceFactory.MAPNIK)
@@ -112,11 +118,12 @@ class BeerNew : AppCompatActivity() {
             }
         }
         beginLocationUpdates()
-        //location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
-
-        //mapView_new.controller.setCenter(GeoPoint(location.latitude, location.longitude))
         mapView_new.controller.setZoom(15.0)
-        //newMarker()
+
+        //Setup light sensor
+        sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        light = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT)
+        sensorManager.registerListener(this, light, SensorManager.SENSOR_DELAY_FASTEST)
 
         imageView_new.setOnLongClickListener() {
             Log.d("click", "long click")
@@ -128,40 +135,22 @@ class BeerNew : AppCompatActivity() {
             add()
         }
 
-        //Setup dropdown menu
-        val arrayAdapter = ArrayAdapter(this, R.layout.size_dropdown_popup_item, sizeItems)
+        //Setup size dropdown menu
+        val arrayAdapterSize = ArrayAdapter(this, R.layout.size_dropdown_popup_item, sizeItems)
         val filledExposedDropdown =  this.findViewById<AutoCompleteTextView>(R.id.filled_exposed_dropdown)
-        filledExposedDropdown.setAdapter(arrayAdapter)
+        filledExposedDropdown.setAdapter(arrayAdapterSize)
         filledExposedDropdown.setOnItemClickListener { parent, view, position, id ->  onSizeSelected(parent, view, position, id)}
 
-/*      val locationListener = object : LocationListener {
-          override fun onLocationChanged(location: Location) {
-              makeUseOfNewLocation(location)
-          }
+        //Setup type dropdown menu
+        typesArray = beerTypes.keys.toTypedArray()
+        val arrayAdapterType = ArrayAdapter(this, R.layout.type_dropdown_pop_item, typesArray)
+        val typeExposedDropdown =  this.findViewById<AutoCompleteTextView>(R.id.type_exposed_dropdown)
+        typeExposedDropdown.setAdapter(arrayAdapterType)
+        typeExposedDropdown.setOnItemClickListener { parent, view, position, id ->  onTypeSelected(parent, view, position, id)}
+    }
 
-          override fun onStatusChanged(provider: String, status: Int, extras: Bundle) {
-              Log.d("location", "onStatusChanged")
-          }
-
-          override fun onProviderEnabled(provider: String) {
-          }
-
-          override fun onProviderDisabled(provider: String) {
-          }
-      }
-
-      locationManager.requestLocationUpdates(
-          LocationManager.NETWORK_PROVIDER,
-          5000,
-          5f,
-          locationListener
-      )
-      locationManager.requestLocationUpdates(
-          LocationManager.GPS_PROVIDER,
-          5000,
-          5f,
-          locationListener
-      )*/
+    private fun onTypeSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+        pickedType = typesArray[position]
     }
 
     private fun onSizeSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
@@ -170,25 +159,22 @@ class BeerNew : AppCompatActivity() {
     }
 
     private fun add() {
+        if(!validate()) {
+            return
+        }
         val beerName = et_beer_name.text.toString()
         val brewerName = et_beer_brewer.text.toString()
         val comment = et_beer_comment.text.toString()
         val score = beer_score_bar.rating
         val lat = location.latitude
         val long = location.longitude
-        if(pickedSize < 250.0) {
-            Log.d("insert", "no size")
-            return
-        }
+        val strengthTemp = et_beer_strength.text.toString().toDouble()
+        val strength = BigDecimal(strengthTemp).setScale(1, RoundingMode.HALF_EVEN).toDouble()
         val size = pickedSize
-        if (imageFile == null) {
-            Log.d("insert", "no image")
-            return
-        }
+        val type = pickedType
         val image = imageFile
         val path = image!!.absolutePath
-        Log.d("info", "name and brewer $beerName $brewerName")
-        val beer = Beer(0, beerName, brewerName, path, size)
+        val beer = Beer(0, beerName, brewerName, path, size, type, strength)
         val db = BeerDB.get(this)
         var id: Long = 0
 
@@ -247,6 +233,7 @@ class BeerNew : AppCompatActivity() {
     override fun onPause() {
         super.onPause()
         endLocationUpdates()
+        sensorManager.unregisterListener(this)
     }
 
     private fun newMarker() {
@@ -292,8 +279,12 @@ class BeerNew : AppCompatActivity() {
             val angle = rotateImageAngle(orientation)
             imageView_new.setImageBitmap(imageBitmapNext)
             imageView_new.rotation = angle.toFloat()
-            val imageBitmap1 = Bitmap.createScaledBitmap(imageBitmapNext, 128, 128, false)
-            //imageView_new.setImageBitmap(imageBitmap1)
+            goodPhoto = true
+            Log.d("success", "result ok, goodphoto is $goodPhoto")
+        }
+        else if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == Activity.RESULT_CANCELED) {
+            Log.d("error", "result canceled")
+            goodPhoto = false
         }
     }
 
@@ -305,6 +296,47 @@ class BeerNew : AppCompatActivity() {
             7, 8 -> 270
             else -> 0
         }
+    }
+
+    private fun validate(): Boolean {
+        if(et_beer_name.text.toString().trim().equals("", true)) {
+            et_beer_name.error = "Name can not be blank."
+            return false
+        }
+        if(et_beer_brewer.text.toString().trim().equals("", true)) {
+            et_beer_brewer.error = "Brewer can not be blank."
+            return false
+        }
+        if(pickedSize < 250.0) {
+            Snackbar.make(findViewById(R.id.view_new_beer), "Please pick a size.", Snackbar.LENGTH_SHORT).setAnchorView(R.id.btn_add).show()
+            return false
+        }
+        if (imageFile == null) {
+            Snackbar.make(findViewById(R.id.view_new_beer), "Please take a picture.", Snackbar.LENGTH_SHORT).setAnchorView(R.id.btn_add).show()
+            return false
+        }
+        if(!goodPhoto) {
+            Log.d("error", "goodphoto is $goodPhoto")
+            Snackbar.make(findViewById(R.id.view_new_beer), "Please take a picture.", Snackbar.LENGTH_SHORT).setAnchorView(R.id.btn_add).show()
+            return false
+        }
+        if(et_beer_strength.text.toString().toDoubleOrNull() == null) {
+            et_beer_strength.error = "Value is not a valid number."
+            return false
+        }
+        if(pickedType == "") {
+            Snackbar.make(findViewById(R.id.view_new_beer), "Please pick a type.", Snackbar.LENGTH_SHORT).setAnchorView(R.id.btn_add).show()
+            return false
+        }
+        return true
+    }
+
+    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
+
+    }
+
+    override fun onSensorChanged(event: SensorEvent?) {
+        Log.d("sensor event", event?.values?.get(0)?.toString())
     }
 }
 
