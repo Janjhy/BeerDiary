@@ -33,18 +33,16 @@
         <activity
             android:name=".BeerNew"
             android:parentActivityName=".MainActivity"
-            android:windowSoftInputMode="adjustPan">
-        </activity>
+            android:windowSoftInputMode="adjustPan" />
 
         <activity
             android:name=".BeerEdit"
             android:parentActivityName=".MainActivity"
-            android:windowSoftInputMode="adjustPan">
-        </activity>
+            android:windowSoftInputMode="adjustPan" />
 
-        <activity android:name=".LocationAll"
-            android:parentActivityName=".MainActivity">
-        </activity>
+        <activity
+            android:name=".LocationAll"
+            android:parentActivityName=".MainActivity" />
 
         <provider
             android:name="androidx.core.content.FileProvider"
@@ -53,13 +51,12 @@
             android:grantUriPermissions="true">
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/file_paths">
-            </meta-data>
+                android:resource="@xml/file_paths" />
         </provider>
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="@string/apikey"/>
+            android:value="@string/apikey" />
 
     </application>
 </manifest>

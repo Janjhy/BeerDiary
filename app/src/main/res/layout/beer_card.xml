@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="100dp"
-    android:orientation="vertical"
     android:layout_marginLeft="10dp"
     android:layout_marginTop="10dp"
     android:layout_marginRight="10dp"
-    >
+    android:orientation="vertical"
+    app:strokeColor="@android:color/darker_gray"
+    app:strokeWidth="2dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
@@ -19,13 +19,13 @@
             android:id="@+id/beerName"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
             android:text="@string/no_beer_name"
             android:textSize="24sp"
             app:layout_constraintBottom_toTopOf="@+id/beerBrewery"
             app:layout_constraintEnd_toStartOf="@+id/guideline6"
             app:layout_constraintStart_toStartOf="@+id/guideline5"
-            app:layout_constraintTop_toTopOf="parent"
-            android:layout_marginStart="10dp"/>
+            app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
             android:id="@+id/beerBrewery"

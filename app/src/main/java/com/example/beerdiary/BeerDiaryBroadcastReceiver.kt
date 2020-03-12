@@ -8,6 +8,6 @@ import com.google.android.material.snackbar.Snackbar
 
 class BeerDiaryBroadcastReceiver: BroadcastReceiver() {
     override fun onReceive(context: Context?, intent: Intent?) {
-        Toast.makeText(context, "change in airplane mode", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, "Change in airplane mode, values might be shown incorrectly.", Toast.LENGTH_SHORT).show()
     }
 }

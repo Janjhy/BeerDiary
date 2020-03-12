@@ -7,22 +7,22 @@ import androidx.room.*
 interface BeerDao {
     @Transaction
     @Query("SELECT * FROM beers, reviews WHERE beers.beer_id = reviews.review_beer_id")
-    fun getBeersAndReviews() : LiveData<List<BeerAndReviews>>
+    fun getBeersAndReviews(): LiveData<List<BeerAndReviews>>
 
     @Query("SELECT * FROM beers, reviews WHERE beers.beer_id = reviews.review_beer_id")
-    fun getBeersAndReviewsR() : List<BeerAndReviews>
+    fun getBeersAndReviewsR(): List<BeerAndReviews>
 
     @Transaction
     @Query("SELECT * FROM beers")
-    fun getBeersR() : List<Beer>
+    fun getBeersR(): List<Beer>
 
     @Transaction
     @Query("SELECT * FROM reviews")
-    fun getReviews() : List<Review>
+    fun getReviews(): List<Review>
 
     @Transaction
     @Query("SELECT * FROM beers")
-    fun getBeers() : LiveData<List<Beer>>
+    fun getBeers(): LiveData<List<Beer>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertBeer(beer: Beer): Long
@@ -39,14 +39,14 @@ interface BeerDao {
     @Query("UPDATE reviews SET review_latitude = :latitude, review_longitude = :longitude WHERE review_id =:id")
     fun updateLocation(latitude: Double, longitude: Double, id: Long)
 
-    @Query("SELECT * FROM beers, reviews  WHERE beers.beer_id = reviews.review_beer_id ORDER BY beer_name")
-    fun beersByName() : LiveData<List<BeerAndReviews>>
+    @Query("SELECT * FROM beers, reviews  WHERE beers.beer_id = reviews.review_beer_id ORDER BY beer_name COLLATE NOCASE")
+    fun beersByName(): LiveData<List<BeerAndReviews>>
 
-    @Query("SELECT * FROM beers, reviews  WHERE beers.beer_id = reviews.review_beer_id ORDER BY beer_brewer")
-    fun beersByBrewer() : LiveData<List<BeerAndReviews>>
+    @Query("SELECT * FROM beers, reviews  WHERE beers.beer_id = reviews.review_beer_id ORDER BY beer_brewer COLLATE NOCASE")
+    fun beersByBrewer(): LiveData<List<BeerAndReviews>>
 
     @Query("SELECT * FROM beers, reviews  WHERE beers.beer_id = reviews.review_beer_id ORDER BY review_score DESC")
-    fun beersByScore() : LiveData<List<BeerAndReviews>>
+    fun beersByScore(): LiveData<List<BeerAndReviews>>
 
     @Delete
     fun deleteBeer(beer: Beer)

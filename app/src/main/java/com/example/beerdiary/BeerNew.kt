@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentSender
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.hardware.Sensor
 import android.hardware.SensorEvent
@@ -20,11 +19,8 @@ import android.os.Looper
 import android.preference.PreferenceManager
 import android.provider.MediaStore
 import android.util.Log
-import android.view.View
-import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -86,7 +82,6 @@ class BeerNew : AppCompatActivity(), SensorEventListener {
         createLocationRequest()
 
         val builder = LocationSettingsRequest.Builder().addLocationRequest(request)
-
         val client: SettingsClient = LocationServices.getSettingsClient(this)
         val task: Task<LocationSettingsResponse> = client.checkLocationSettings(builder.build())
 
@@ -126,7 +121,6 @@ class BeerNew : AppCompatActivity(), SensorEventListener {
         sensorManager.registerListener(this, light, SensorManager.SENSOR_DELAY_FASTEST)
 
         imageView_new.setOnLongClickListener() {
-            Log.d("click", "long click")
             savePhotoIntent()
             true
         }
@@ -135,25 +129,33 @@ class BeerNew : AppCompatActivity(), SensorEventListener {
             add()
         }
 
+        button_add_image.setOnClickListener {
+            savePhotoIntent()
+        }
+
         //Setup size dropdown menu
         val arrayAdapterSize = ArrayAdapter(this, R.layout.size_dropdown_popup_item, sizeItems)
         val filledExposedDropdown =  this.findViewById<AutoCompleteTextView>(R.id.filled_exposed_dropdown)
         filledExposedDropdown.setAdapter(arrayAdapterSize)
-        filledExposedDropdown.setOnItemClickListener { parent, view, position, id ->  onSizeSelected(parent, view, position, id)}
+        filledExposedDropdown.setOnItemClickListener { _, _, position, _ ->  onSizeSelected(
+            position
+        )}
 
         //Setup type dropdown menu
         typesArray = beerTypes.keys.toTypedArray()
         val arrayAdapterType = ArrayAdapter(this, R.layout.type_dropdown_pop_item, typesArray)
         val typeExposedDropdown =  this.findViewById<AutoCompleteTextView>(R.id.type_exposed_dropdown)
         typeExposedDropdown.setAdapter(arrayAdapterType)
-        typeExposedDropdown.setOnItemClickListener { parent, view, position, id ->  onTypeSelected(parent, view, position, id)}
+        typeExposedDropdown.setOnItemClickListener { _, _, position, _ ->  onTypeSelected(
+            position
+        )}
     }
 
-    private fun onTypeSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+    private fun onTypeSelected(position: Int) {
         pickedType = typesArray[position]
     }
 
-    private fun onSizeSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+    private fun onSizeSelected(position: Int) {
         Log.d("dropdown", sizeItems[position].toString())
         pickedSize = sizeItems[position]
     }

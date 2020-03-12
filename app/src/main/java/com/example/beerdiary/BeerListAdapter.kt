@@ -50,7 +50,6 @@ class BeerListAdapter(
     }
 
     override fun getItemCount(): Int {
-        Log.d("items size", items.size.toString())
         return items.size
     }
 
@@ -59,7 +58,6 @@ class BeerListAdapter(
     }
 
     private fun rotateImageAngle(orientation: Int): Int {
-        Log.d("exif", "orientation is $orientation")
         return when (orientation) {
             3, 4 -> 180
             5, 6 -> 90

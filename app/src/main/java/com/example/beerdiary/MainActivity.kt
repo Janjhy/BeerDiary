@@ -18,7 +18,11 @@ class MainActivity : AppCompatActivity(), BeerListFragment.BeerFragmentListener 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        supportFragmentManager.beginTransaction().add(R.id.fragment_container, BeerListFragment.newInstance(), "beerList").commit()
+
+        //Loads the list fragment to the activity
+        supportFragmentManager.beginTransaction()
+            .add(R.id.fragment_container, BeerListFragment.newInstance(), "beerList").commit()
+
         val filter = IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION).apply {
             addAction(Intent.ACTION_AIRPLANE_MODE_CHANGED)
         }
@@ -27,9 +31,10 @@ class MainActivity : AppCompatActivity(), BeerListFragment.BeerFragmentListener 
     }
 
     override fun onButtonClick(position: Int) {
-        Log.d("onbtnclick", "clicked at pos $position")
         val detailFragment = FragmentBeerInfo
-        supportFragmentManager.beginTransaction().replace(R.id.fragment_container, detailFragment.newInstance(position)).addToBackStack(null).commit()
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.fragment_container, detailFragment.newInstance(position))
+            .addToBackStack(null).commit()
     }
 
     override fun onDestroy() {

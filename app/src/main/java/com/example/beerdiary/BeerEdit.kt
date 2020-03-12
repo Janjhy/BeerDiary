@@ -1,33 +1,18 @@
 package com.example.beerdiary
 
 import android.app.Activity
-import android.content.Context
 import android.content.Intent
-import android.content.IntentSender
-import android.content.pm.PackageManager
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.location.Location
-import android.location.LocationListener
-import android.location.LocationManager
 import android.media.ExifInterface
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
-import android.os.Looper
 import android.preference.PreferenceManager
 import android.provider.MediaStore
 import android.util.Log
-import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
-import com.google.android.gms.common.api.ResolvableApiException
-import com.google.android.gms.location.*
-import com.google.android.gms.maps.MapView
-import com.google.android.gms.tasks.Task
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.beer_new.*
 import org.osmdroid.config.Configuration
@@ -40,7 +25,7 @@ import java.io.File
 import java.math.BigDecimal
 import java.math.RoundingMode
 
-class BeerEdit: AppCompatActivity(), MapEventsReceiver {
+class BeerEdit : AppCompatActivity(), MapEventsReceiver {
 
     private var latitude: Double = 0.0
     private var longitude: Double = 0.0
@@ -59,13 +44,14 @@ class BeerEdit: AppCompatActivity(), MapEventsReceiver {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        //Get beerID from the activity intent
         beerID = intent.getLongExtra("BEER_ID", 0)
 
+        //Setting up fro mapview
         val contxt = applicationContext
-
         Configuration.getInstance()
             .load(contxt, PreferenceManager.getDefaultSharedPreferences(contxt))
-
         setContentView(R.layout.beer_new)
         mapView_new.setTileSource(TileSourceFactory.MAPNIK)
 
@@ -74,46 +60,64 @@ class BeerEdit: AppCompatActivity(), MapEventsReceiver {
             savePhotoIntent()
             true
         }
+
+        //Setup for placing current values into views
         setUp()
+
+        //Init marker
         marker = Marker(mapView_new)
+
         btn_add.setOnClickListener {
             update()
         }
 
+        button_add_image.setOnClickListener {
+            savePhotoIntent()
+        }
+
+        //Add a map overlay to get click events, and set zoom
         val mapEventsOverlay = MapEventsOverlay(this, this)
         mapView_new.overlays.add(0, mapEventsOverlay)
         mapView_new.controller.setZoom(15.0)
 
         //Setup dropdown menu
         arrayAdapter = ArrayAdapter(this, R.layout.size_dropdown_popup_item, sizeItems)
-        filledExposedDropdown =  this.findViewById(R.id.filled_exposed_dropdown)
+        filledExposedDropdown = this.findViewById(R.id.filled_exposed_dropdown)
         filledExposedDropdown.setAdapter(arrayAdapter)
-        filledExposedDropdown.setOnItemClickListener { parent, view, position, id ->  onSizeSelected(parent, view, position, id)}
+        filledExposedDropdown.setOnItemClickListener { _, _, position, _ ->
+            onSizeSelected(
+                position
+            )
+        }
 
         //Setup type dropdown menu
         typesArray = beerTypes.keys.toTypedArray()
         val arrayAdapterType = ArrayAdapter(this, R.layout.type_dropdown_pop_item, typesArray)
-        typeExposedDropdown =  this.findViewById(R.id.type_exposed_dropdown)
+        typeExposedDropdown = this.findViewById(R.id.type_exposed_dropdown)
         typeExposedDropdown.setAdapter(arrayAdapterType)
         beer_size_dropdown.hint = ""
         beer_type_dropdown.hint = ""
-
-        typeExposedDropdown.setOnItemClickListener { parent, view, position, id ->  onTypeSelected(parent, view, position, id)}
+        typeExposedDropdown.setOnItemClickListener { _, _, position, _ ->
+            onTypeSelected(
+                position
+            )
+        }
     }
 
-    private fun onTypeSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+    private fun onTypeSelected(position: Int) {
         pickedType = typesArray[position]
     }
 
-    private fun onSizeSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-        Log.d("dropdown", sizeItems[position].toString())
+    private fun onSizeSelected(position: Int) {
         pickedSize = sizeItems[position]
     }
 
+    //Function to get beer item from database
     private fun getBeer(): BeerAndReviews {
         return BeerDB.get(applicationContext).beerDao().getBeerAndReview(beerID)
     }
 
+    //Setup values into view objects from the beer object
     private fun setUp() {
         Thread(Runnable {
             val beerAndReview = getBeer()
@@ -122,27 +126,34 @@ class BeerEdit: AppCompatActivity(), MapEventsReceiver {
             val photoPath = beerTemp?.imagePath
             if (photoPath != null) {
                 path = photoPath
+                imageFile = File(photoPath)
             }
-            imageFile = File(photoPath)
+            val exif = ExifInterface(path)
             val imageBitmap = BitmapFactory.decodeFile(photoPath)
-            val exif = ExifInterface(photoPath)
             val orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, 1)
             val angle = rotateImageAngle(orientation)
             latitude = reviewTemp?.latitude!!
             longitude = reviewTemp.longitude
-            pickedSize = beerTemp?.beerSize!!
+            if (beerTemp != null) {
+                pickedSize = beerTemp.beerSize
+            }
             btn_add.text = getString(R.string.confirm)
             reviewID = reviewTemp.reviewId
-            pickedType = beerTemp.beerType
+            pickedType = beerTemp?.beerType.toString()
 
             runOnUiThread {
-                et_beer_name.setText(beerTemp?.beerName, TextView.BufferType.EDITABLE)
-                et_beer_comment.setText(reviewTemp?.comment, TextView.BufferType.EDITABLE)
-                et_beer_brewer.setText(beerTemp?.brewer, TextView.BufferType.EDITABLE)
-                et_beer_strength.setText(beerTemp?.beerStrength.toString(), TextView.BufferType.EDITABLE)
-                beer_score_bar.rating = reviewTemp?.score!!
-                filledExposedDropdown.hint = beerTemp?.beerSize?.toInt().toString() + " ml"
-                typeExposedDropdown.hint = beerTemp?.beerType
+                et_beer_comment.setText(reviewTemp.comment, TextView.BufferType.EDITABLE)
+                if (beerTemp != null) {
+                    et_beer_name.setText(beerTemp.beerName, TextView.BufferType.EDITABLE)
+                    et_beer_brewer.setText(beerTemp.brewer, TextView.BufferType.EDITABLE)
+                    et_beer_strength.setText(
+                        beerTemp.beerStrength.toString(),
+                        TextView.BufferType.EDITABLE
+                    )
+                    filledExposedDropdown.hint = beerTemp.beerSize.toInt().toString() + " ml"
+                    typeExposedDropdown.hint = beerTemp.beerType
+                }
+                beer_score_bar.rating = reviewTemp.score
                 imageView_new.rotation = angle.toFloat()
                 imageView_new.setImageBitmap(imageBitmap)
                 newMarker()
@@ -150,8 +161,9 @@ class BeerEdit: AppCompatActivity(), MapEventsReceiver {
         }).start()
     }
 
+    //If validation is okay, update the values for the beer item into database
     private fun update() {
-        if(!validate()) {
+        if (!validate()) {
             return
         }
         val beerName = et_beer_name.text.toString()
@@ -172,17 +184,12 @@ class BeerEdit: AppCompatActivity(), MapEventsReceiver {
         val review = Review(reviewID, score, comment, id, lat, long)
         val firstThread = Thread(Runnable {
             db.beerDao().updateBeer(beer, review)
-
-            Log.d("insert", "inserted beer id: $id")
-
-            if (db != null) {
-                Log.d("contents", "beer " + (db.beerDao().getBeersR()))
-            }
         })
         firstThread.start()
         finish()
     }
 
+    //Function to place a marker
     private fun newMarker() {
         mapView_new.overlays.remove(marker)
         marker.position = GeoPoint(latitude, longitude)
@@ -191,8 +198,9 @@ class BeerEdit: AppCompatActivity(), MapEventsReceiver {
         mapView_new.controller.setCenter(GeoPoint(latitude, longitude))
     }
 
+    //Intent to take a photo and save it
     private fun savePhotoIntent() {
-        var tempImageFile: File?
+        val tempImageFile: File?
         val fileName = "temp_photo"
         val imgPath = getExternalFilesDir(Environment.DIRECTORY_PICTURES)
         tempImageFile = File.createTempFile(fileName, ".jpg", imgPath)
@@ -209,6 +217,7 @@ class BeerEdit: AppCompatActivity(), MapEventsReceiver {
         }
     }
 
+    //Activity result for intents
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == Activity.RESULT_OK) {
@@ -220,15 +229,13 @@ class BeerEdit: AppCompatActivity(), MapEventsReceiver {
             val angle = rotateImageAngle(orientation)
             imageView_new.setImageBitmap(imageBitmapNext)
             imageView_new.rotation = angle.toFloat()
-        }
-        else if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == Activity.RESULT_CANCELED) {
-            Log.d("error", "result canceled")
+        } else if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == Activity.RESULT_CANCELED) {
             imageFile = File(path)
         }
     }
 
+    //Function to calculate necessary angles for image rotation, if photo is properly oriented
     private fun rotateImageAngle(orientation: Int): Int {
-        Log.d("exif", "orientation is $orientation")
         return when (orientation) {
             3, 4 -> 180
             5, 6 -> 90
@@ -241,38 +248,52 @@ class BeerEdit: AppCompatActivity(), MapEventsReceiver {
         return false
     }
 
+    //Tap listener for mapview
     override fun singleTapConfirmedHelper(p: GeoPoint?): Boolean {
-        Log.d("tapped", "at ${p?.latitude} ${p?.longitude}" )
+        Log.d("tapped", "at ${p?.latitude} ${p?.longitude}")
         latitude = p?.latitude!!
         longitude = p.longitude
-        Log.d("on tap result","$latitude and $longitude")
+        Log.d("on tap result", "$latitude and $longitude")
         newMarker()
         return true;
     }
 
+    //Validation for inputs
     private fun validate(): Boolean {
-        if(et_beer_name.text.toString().trim().equals("", true)) {
+        if (et_beer_name.text.toString().trim().equals("", true)) {
             et_beer_name.error = "Name can not be blank."
             return false
         }
-        if(et_beer_brewer.text.toString().trim().equals("", true)) {
+        if (et_beer_brewer.text.toString().trim().equals("", true)) {
             et_beer_brewer.error = "Brewer can not be blank."
             return false
         }
-        if(pickedSize < 250.0) {
-            Snackbar.make(findViewById(R.id.view_new_beer), "Please pick a size.", Snackbar.LENGTH_SHORT).setAnchorView(R.id.btn_add).show()
+        if (pickedSize < 250.0) {
+            Snackbar.make(
+                findViewById(R.id.view_new_beer),
+                "Please pick a size.",
+                Snackbar.LENGTH_SHORT
+            ).setAnchorView(R.id.btn_add).show()
             return false
         }
         if (imageFile == null) {
-            Snackbar.make(findViewById(R.id.view_new_beer), "Please take a picture.", Snackbar.LENGTH_SHORT).setAnchorView(R.id.btn_add).show()
+            Snackbar.make(
+                findViewById(R.id.view_new_beer),
+                "Please take a picture.",
+                Snackbar.LENGTH_SHORT
+            ).setAnchorView(R.id.btn_add).show()
             return false
         }
-        if(et_beer_strength.text.toString().toDoubleOrNull() == null) {
+        if (et_beer_strength.text.toString().toDoubleOrNull() == null) {
             et_beer_strength.error = "Value is not a valid number."
             return false
         }
-        if(pickedType == "") {
-            Snackbar.make(findViewById(R.id.view_new_beer), "Please pick a type.", Snackbar.LENGTH_SHORT).setAnchorView(R.id.btn_add).show()
+        if (pickedType == "") {
+            Snackbar.make(
+                findViewById(R.id.view_new_beer),
+                "Please pick a type.",
+                Snackbar.LENGTH_SHORT
+            ).setAnchorView(R.id.btn_add).show()
             return false
         }
         return true

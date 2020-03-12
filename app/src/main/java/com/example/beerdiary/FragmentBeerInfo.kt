@@ -7,9 +7,9 @@ import android.media.ExifInterface
 import android.os.Bundle
 import android.util.Log
 import android.view.*
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProviders
 import com.google.android.gms.maps.*
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
@@ -37,6 +37,7 @@ class FragmentBeerInfo : Fragment(), OnMapReadyCallback {
     private var position: Int = 0
     private lateinit var mapViewInfo: com.google.android.gms.maps.MapView
     private lateinit var mMap: GoogleMap
+    private lateinit var model: BeerModel
 
     override fun onAttach(context: Context) {
         context.let { super.onAttach(it) }
@@ -53,7 +54,12 @@ class FragmentBeerInfo : Fragment(), OnMapReadyCallback {
         mapViewInfo = view.findViewById(R.id.mapView)
         mapViewInfo.onCreate(savedInstanceState)
         mapViewInfo.getMapAsync(this)
+
         setHasOptionsMenu(true)
+
+        activity?.let {
+            model = ViewModelProviders.of(it).get(BeerModel::class.java)
+        }
 
         return view
     }
@@ -67,14 +73,14 @@ class FragmentBeerInfo : Fragment(), OnMapReadyCallback {
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         super.onCreateOptionsMenu(menu, inflater)
         inflater.inflate(R.menu.info_bottom_menu, menu)
-        Log.d("inflate", "menu inflated")
         bar.setOnMenuItemClickListener { item ->
-            when(item.itemId) {
+            when (item.itemId) {
                 R.id.app_bar_delete -> {
                     activity?.let {
                         MaterialAlertDialogBuilder(it).setTitle("Confirm deletion")
                             .setMessage("This will remove the shown beer. This action is irreversible.")
-                            .setPositiveButton(R.string.confirm ) { _, _ ->  Thread(Runnable { delete() }).start()
+                            .setPositiveButton(R.string.confirm) { _, _ ->
+                                Thread(Runnable { delete() }).start()
                                 activity?.supportFragmentManager?.popBackStack()
                             }
                             .setNegativeButton(R.string.cancel) { _, _ ->
@@ -84,7 +90,7 @@ class FragmentBeerInfo : Fragment(), OnMapReadyCallback {
                 }
                 R.id.app_bar_edit -> {
                     val intent = Intent(activity, BeerEdit::class.java)
-                    intent.putExtra("BEER_ID" , beerAndReview.beer?.beerId)
+                    intent.putExtra("BEER_ID", beerAndReview.beer?.beerId)
                     startActivity(intent)
                     true
                 }
@@ -94,15 +100,12 @@ class FragmentBeerInfo : Fragment(), OnMapReadyCallback {
     }
 
     private fun delete() {
-        Log.d("bottombar", "pressed delete")
         context?.let { beerAndReview.beer?.let { it1 -> BeerDB.get(it).beerDao().deleteBeer(it1) } }
     }
 
 
-
     override fun onResume() {
         super.onResume()
-        Log.d("fragment lifecycle", "resume")
         Thread(Runnable { getContent() }).start()
         mapViewInfo.onResume()
     }
@@ -140,17 +143,20 @@ class FragmentBeerInfo : Fragment(), OnMapReadyCallback {
                 )
             )
             mMap.uiSettings.isZoomControlsEnabled = true
-            mMap.addMarker(MarkerOptions().position(
-                LatLng(beerAndReview.review!!.latitude,
-                    beerAndReview.review!!.longitude)
-            ))
+            mMap.addMarker(
+                MarkerOptions().position(
+                    LatLng(
+                        beerAndReview.review!!.latitude,
+                        beerAndReview.review!!.longitude
+                    )
+                )
+            )
         }
     }
 
     private fun getContent() {
-        val db = activity?.applicationContext?.let { BeerDB.get(it) }
-        val temp = db?.beerDao()?.getBeersAndReviewsR()?.get(position)
-        Log.d("get", temp.toString())
+        //val db = activity?.applicationContext?.let { BeerDB.get(it) }
+        val temp = model.getBeers().value?.get(position)
         if (temp != null) {
             beerAndReview = temp
         }
@@ -172,9 +178,10 @@ class FragmentBeerInfo : Fragment(), OnMapReadyCallback {
             beer_brewer.text = beerAndReview.beer?.brewer
             beer_score_bar.rating = beerAndReview.review!!.score
             beer_comment.text = beerAndReview.review?.comment
-            beer_size.text = activity?.applicationContext?.getString(R.string.beer_size_ml,
-                    size
-                )
+            beer_size.text = activity?.applicationContext?.getString(
+                R.string.beer_size_ml,
+                size
+            )
             imageView_info.setImageBitmap(imageBitmap)
             imageView_info.rotation = angle.toFloat()
             beer_type.text = beerAndReview.beer?.beerType
@@ -184,8 +191,7 @@ class FragmentBeerInfo : Fragment(), OnMapReadyCallback {
     }
 
     private fun rotateImageAngle(orientation: Int): Int {
-        Log.d("exif", "orientation is $orientation")
-        return when(orientation) {
+        return when (orientation) {
             3, 4 -> 180
             5, 6 -> 90
             7, 8 -> 270
@@ -196,17 +202,23 @@ class FragmentBeerInfo : Fragment(), OnMapReadyCallback {
     private fun callWebService(quantity: Double) {
         val call = WebActivity().service.unitConversion(quantity)
         val value = object : Callback<WebActivity.Model.Result> {
-            override fun onResponse(call: Call<WebActivity.Model.Result>, response:
-            Response<WebActivity.Model.Result>?) {
+            override fun onResponse(
+                call: Call<WebActivity.Model.Result>, response:
+                Response<WebActivity.Model.Result>?
+            ) {
                 if (response != null) {
                     val res: WebActivity.Model.Result = response.body()!!
-                    Log.d("DBG()", "${res}")
-                    beer_size_oz.text =
-                        activity?.applicationContext?.getString(R.string.beer_size_oz,
-                            res.UCUMWebServiceResponse.Response.ResultQuantity
-                        )
+                    if (beer_size_oz != null) {
+                        beer_size_oz.text =
+                            activity?.applicationContext?.getString(
+                                R.string.beer_size_oz,
+                                res.UCUMWebServiceResponse.Response.ResultQuantity
+                            )
+                    }
+
                 }
             }
+
             override fun onFailure(call: Call<WebActivity.Model.Result>, t: Throwable) {
                 Log.e("DBG(failure)", t.toString())
             }

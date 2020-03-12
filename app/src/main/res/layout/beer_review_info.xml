@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/fragment_info"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -94,13 +93,13 @@
                 android:id="@+id/beer_strength"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
-                android:text="@string/alcohol_by_volume"
                 android:minHeight="40dp"
+                android:text="@string/alcohol_by_volume"
                 app:layout_constraintBottom_toTopOf="@+id/beer_score_bar"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="0.5"
                 app:layout_constraintStart_toEndOf="@+id/beer_type"
-                app:layout_constraintTop_toTopOf="@+id/guideline"/>
+                app:layout_constraintTop_toTopOf="@+id/guideline" />
 
             <TextView
                 android:id="@+id/beer_score_text"
@@ -121,11 +120,10 @@
                 android:numStars="5"
                 android:rating="2.5"
                 android:stepSize="0.5"
+                app:layout_constraintBottom_toTopOf="@id/mapView"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintBottom_toTopOf="@id/mapView"
-                app:layout_constraintTop_toBottomOf="@+id/beer_type"
-                 />
+                app:layout_constraintTop_toBottomOf="@+id/beer_type" />
 
             <com.google.android.gms.maps.MapView
                 android:id="@+id/mapView"

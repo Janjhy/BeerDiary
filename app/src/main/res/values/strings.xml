@@ -24,4 +24,5 @@
     <string name="beer_type">Beer type</string>
     <string name="cancel">Cancel</string>
     <string name="beer_strength_format">%1$.1f%</string>
+    <string name="take_a_photo">Take a photo</string>
 </resources>

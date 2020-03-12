@@ -31,17 +31,17 @@ class LocationAll : AppCompatActivity() {
     private fun setMarkers() {
         val avLat = mutableListOf<Double>()
         val avLong = mutableListOf<Double>()
-        for(item in list) {
-            if(item.review != null && item.beer != null) {
+        for (item in list) {
+            if (item.review != null && item.beer != null) {
                 avLat.add(item.review.latitude)
                 avLong.add(item.review.longitude)
                 addMarker(item)
             }
         }
-        if(avLat.size != 0 && avLong.size != 0) {
+        if (avLat.size != 0 && avLong.size != 0) {
             val latAverage = avLat.average()
             val longAverage = avLong.average()
-            runOnUiThread { map_all.controller.setCenter(GeoPoint( latAverage, longAverage)) }
+            runOnUiThread { map_all.controller.setCenter(GeoPoint(latAverage, longAverage)) }
         }
     }
 

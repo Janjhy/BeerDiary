@@ -11,7 +11,7 @@
     <ScrollView
         android:id="@+id/main_ll"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:fillViewport="true"
         android:orientation="vertical"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -26,68 +26,67 @@
             <ImageView
                 android:id="@+id/imageView_new"
                 android:layout_width="0dp"
-                android:layout_height="0dp"
+                android:layout_height="wrap_content"
                 android:contentDescription="@string/image_of_beer"
-                app:layout_constraintBottom_toTopOf="@+id/guideline"
-                app:layout_constraintEnd_toStartOf="@+id/guideline2"
+                android:minHeight="200dp"
+                app:layout_constraintBottom_toTopOf="@+id/button_add_image"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHeight_default="spread"
+                app:layout_constraintHeight_min="200dp"
+                app:layout_constraintHorizontal_bias="0.5"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:srcCompat="@android:drawable/ic_menu_camera" />
 
+            <Button
+                android:id="@+id/button_add_image"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="@string/take_a_photo"
+                app:layout_constraintBottom_toTopOf="@+id/et_beer_name"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.0"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/imageView_new" />
+
             <EditText
                 android:id="@+id/et_beer_name"
                 android:layout_width="0dp"
-                android:layout_height="0dp"
+                android:layout_height="wrap_content"
                 android:hint="@string/beer_name"
                 android:imeOptions="actionDone"
                 android:importantForAutofill="no"
                 android:inputType="text"
                 app:layout_constraintBottom_toTopOf="@+id/et_beer_brewer"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="@+id/guideline2"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintHorizontal_bias="0.5"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/button_add_image" />
 
             <EditText
                 android:id="@+id/et_beer_brewer"
                 android:layout_width="0dp"
-                android:layout_height="0dp"
+                android:layout_height="wrap_content"
                 android:hint="@string/brewer"
                 android:imeOptions="actionDone"
                 android:importantForAutofill="no"
                 android:inputType="text"
-                app:layout_constraintBottom_toTopOf="@+id/beer_size_dropdown"
+                app:layout_constraintBottom_toTopOf="@+id/beer_type_dropdown"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toEndOf="@+id/imageView_new"
+                app:layout_constraintHorizontal_bias="0.5"
+                app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/et_beer_name" />
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/beer_size_dropdown"
-                style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox.ExposedDropdownMenu"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                app:layout_constraintBottom_toTopOf="@+id/guideline"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="@+id/guideline2"
-                app:layout_constraintTop_toBottomOf="@+id/et_beer_brewer">
-
-                <AutoCompleteTextView
-                    android:id="@+id/filled_exposed_dropdown"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:editable="false"
-                    android:hint="@string/beer_size_placeholder" />
-
-            </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/beer_type_dropdown"
                 style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox.ExposedDropdownMenu"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                app:layout_constraintEnd_toStartOf="@+id/et_beer_strength"
+                app:layout_constraintBottom_toTopOf="@+id/beer_size_dropdown"
+                app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="0.5"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="@+id/guideline">
+                app:layout_constraintTop_toBottomOf="@+id/et_beer_brewer">
 
                 <AutoCompleteTextView
                     android:id="@+id/type_exposed_dropdown"
@@ -96,6 +95,24 @@
                     android:editable="false"
                     android:hint="@string/beer_type" />
 
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/beer_size_dropdown"
+                style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox.ExposedDropdownMenu"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                app:layout_constraintBottom_toTopOf="@id/beer_score_text"
+                app:layout_constraintEnd_toStartOf="@+id/guideline2"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/beer_type_dropdown">
+
+                <AutoCompleteTextView
+                    android:id="@+id/filled_exposed_dropdown"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:editable="false"
+                    android:hint="@string/beer_size_placeholder" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <EditText
@@ -107,23 +124,21 @@
                 android:imeOptions="actionDone"
                 android:importantForAutofill="no"
                 android:inputType="numberDecimal"
-                app:layout_constraintBottom_toTopOf="@+id/beer_score_bar"
+                app:layout_constraintBottom_toTopOf="@id/beer_score_text"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.5"
-                app:layout_constraintStart_toEndOf="@+id/beer_type_dropdown"
-                app:layout_constraintTop_toTopOf="@+id/guideline" />
+                app:layout_constraintStart_toStartOf="@+id/guideline2"
+                app:layout_constraintTop_toBottomOf="@id/beer_type_dropdown" />
 
             <TextView
                 android:id="@+id/beer_score_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="39dp"
                 android:text="@string/beer_score"
-                app:layout_constraintBottom_toTopOf="@+id/mapView_new"
-                app:layout_constraintEnd_toStartOf="@+id/beer_score_bar"
-                app:layout_constraintHorizontal_bias="0.395"
+                app:layout_constraintBottom_toTopOf="@+id/beer_score_bar"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.5"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/beer_type_dropdown" />
+                app:layout_constraintTop_toBottomOf="@+id/beer_size_dropdown" />
 
             <RatingBar
                 android:id="@+id/beer_score_bar"
@@ -132,33 +147,44 @@
                 android:numStars="5"
                 android:rating="2.5"
                 android:stepSize="0.5"
-                app:layout_constraintBottom_toTopOf="@id/mapView_new"
+                app:layout_constraintBottom_toTopOf="@+id/mapView_new"
                 app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.5"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/beer_type_dropdown" />
+                app:layout_constraintTop_toBottomOf="@+id/beer_score_text" />
 
             <org.osmdroid.views.MapView
                 android:id="@+id/mapView_new"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
-                app:layout_constraintBottom_toTopOf="@+id/guideline3"
+                app:layout_constraintBottom_toTopOf="@+id/et_beer_comment"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.0"
+                app:layout_constraintHeight_default="spread"
+                app:layout_constraintHeight_min="200dp"
+                app:layout_constraintHorizontal_bias="0.5"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/beer_score_bar" />
 
             <EditText
                 android:id="@+id/et_beer_comment"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
                 android:hint="@string/beer_comment"
                 android:imeOptions="actionDone"
                 android:importantForAutofill="no"
                 android:inputType="text"
-                app:layout_constraintBottom_toTopOf="@+id/guideline4"
+                app:layout_constraintBottom_toBottomOf="@id/spacer"
                 app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.5"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/mapView_new" />
+
+            <View
+                android:id="@+id/spacer"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                app:layout_constraintBottom_toTopOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/et_beer_comment" />
 
             <androidx.constraintlayout.widget.Guideline
                 android:id="@+id/guideline2"
@@ -167,27 +193,6 @@
                 android:orientation="vertical"
                 app:layout_constraintGuide_percent="0.5" />
 
-            <androidx.constraintlayout.widget.Guideline
-                android:id="@+id/guideline"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                app:layout_constraintGuide_percent="0.3" />
-
-            <androidx.constraintlayout.widget.Guideline
-                android:id="@+id/guideline3"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                app:layout_constraintGuide_percent="0.78" />
-
-            <androidx.constraintlayout.widget.Guideline
-                android:id="@+id/guideline4"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                app:layout_constraintGuide_percent="0.89" />
-
         </androidx.constraintlayout.widget.ConstraintLayout>
     </ScrollView>
 
@@ -195,7 +200,7 @@
         android:id="@+id/btn_add"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/add"
-        android:layout_gravity="bottom" />
+        android:layout_gravity="bottom"
+        android:text="@string/add" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
