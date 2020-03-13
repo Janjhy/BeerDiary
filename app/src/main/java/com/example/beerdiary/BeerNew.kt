@@ -28,6 +28,7 @@ import androidx.core.content.FileProvider
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
 import com.google.android.gms.tasks.Task
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.beer_new.*
 import org.osmdroid.config.Configuration
@@ -52,6 +53,7 @@ class BeerNew : AppCompatActivity(), SensorEventListener {
     private lateinit var typesArray: Array<String>
     private var goodPhoto: Boolean = false
     private lateinit var light: Sensor
+    private var lux: Float = 0.0F
     private lateinit var sensorManager: SensorManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -87,18 +89,17 @@ class BeerNew : AppCompatActivity(), SensorEventListener {
 
         task.addOnSuccessListener {
             fusedLocationClient.lastLocation.addOnSuccessListener {
-                location = it
-                Log.d("location", it.toString())
+                if (it != null) {
+                    location = it
+                }
             }
         }
 
-        task.addOnFailureListener {
-                exception ->
-            if(exception is ResolvableApiException) {
+        task.addOnFailureListener { exception ->
+            if (exception is ResolvableApiException) {
                 try {
                     exception.startResolutionForResult(this, REQUEST_CHECK_SETTINGS)
                 } catch (sendException: IntentSender.SendIntentException) {
-
                 }
             }
         }
@@ -112,6 +113,7 @@ class BeerNew : AppCompatActivity(), SensorEventListener {
                 }
             }
         }
+
         beginLocationUpdates()
         mapView_new.controller.setZoom(15.0)
 
@@ -121,7 +123,7 @@ class BeerNew : AppCompatActivity(), SensorEventListener {
         sensorManager.registerListener(this, light, SensorManager.SENSOR_DELAY_FASTEST)
 
         imageView_new.setOnLongClickListener() {
-            savePhotoIntent()
+            confirmTakePhoto()
             true
         }
 
@@ -130,25 +132,31 @@ class BeerNew : AppCompatActivity(), SensorEventListener {
         }
 
         button_add_image.setOnClickListener {
-            savePhotoIntent()
+            confirmTakePhoto()
         }
 
         //Setup size dropdown menu
         val arrayAdapterSize = ArrayAdapter(this, R.layout.size_dropdown_popup_item, sizeItems)
-        val filledExposedDropdown =  this.findViewById<AutoCompleteTextView>(R.id.filled_exposed_dropdown)
+        val filledExposedDropdown =
+            this.findViewById<AutoCompleteTextView>(R.id.filled_exposed_dropdown)
         filledExposedDropdown.setAdapter(arrayAdapterSize)
-        filledExposedDropdown.setOnItemClickListener { _, _, position, _ ->  onSizeSelected(
-            position
-        )}
+        filledExposedDropdown.setOnItemClickListener { _, _, position, _ ->
+            onSizeSelected(
+                position
+            )
+        }
 
         //Setup type dropdown menu
         typesArray = beerTypes.keys.toTypedArray()
         val arrayAdapterType = ArrayAdapter(this, R.layout.type_dropdown_pop_item, typesArray)
-        val typeExposedDropdown =  this.findViewById<AutoCompleteTextView>(R.id.type_exposed_dropdown)
+        val typeExposedDropdown =
+            this.findViewById<AutoCompleteTextView>(R.id.type_exposed_dropdown)
         typeExposedDropdown.setAdapter(arrayAdapterType)
-        typeExposedDropdown.setOnItemClickListener { _, _, position, _ ->  onTypeSelected(
-            position
-        )}
+        typeExposedDropdown.setOnItemClickListener { _, _, position, _ ->
+            onTypeSelected(
+                position
+            )
+        }
     }
 
     private fun onTypeSelected(position: Int) {
@@ -161,7 +169,7 @@ class BeerNew : AppCompatActivity(), SensorEventListener {
     }
 
     private fun add() {
-        if(!validate()) {
+        if (!validate()) {
             return
         }
         val beerName = et_beer_name.text.toString()
@@ -181,25 +189,13 @@ class BeerNew : AppCompatActivity(), SensorEventListener {
         var id: Long = 0
 
         val firstThread = Thread(Runnable {
-            //db.clearAllTables()
             id = db.beerDao().insertBeer(beer)
-
-            Log.d("insert", "inserted beer id: $id")
-
-            if (db != null) {
-                Log.d("contents", "beer " + (db.beerDao().getBeersR()))
-            }
         })
         firstThread.start()
         firstThread.join()
         val review = Review(0, score, comment, id, lat, long)
         val secondThread = Thread(Runnable {
-            val reviewid = db.beerDao().insertReview(review)
-            Log.d("insert", "inserted review id: $reviewid")
-            Log.d("contents", "review  " + (db.beerDao().getReviews()))
-            if (db != null) {
-                Log.d("contents", "beer and review  " + (db.beerDao().getBeersAndReviewsR()))
-            }
+            db.beerDao().insertReview(review)
         })
         secondThread.start()
         finish()
@@ -207,7 +203,7 @@ class BeerNew : AppCompatActivity(), SensorEventListener {
 
     override fun onResume() {
         super.onResume()
-        if(!gettingLocation) beginLocationUpdates()
+        if (!gettingLocation) beginLocationUpdates()
     }
 
     private fun createLocationRequest() {
@@ -269,6 +265,20 @@ class BeerNew : AppCompatActivity(), SensorEventListener {
         }
     }
 
+    private fun confirmTakePhoto() {
+        Log.d("lux", lux.toString())
+        if (lux < 50) {
+            MaterialAlertDialogBuilder(this).setTitle("Low light")
+                .setMessage("Low light surrounding may result in a dim photo. Do you want to continue?")
+                .setPositiveButton(R.string.continue_action) { _, _ ->
+                    savePhotoIntent()
+                }
+                .setNegativeButton(R.string.cancel) { _, _ ->
+                }
+                .show()
+        } else savePhotoIntent()
+    }
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == Activity.RESULT_OK) {
@@ -283,8 +293,7 @@ class BeerNew : AppCompatActivity(), SensorEventListener {
             imageView_new.rotation = angle.toFloat()
             goodPhoto = true
             Log.d("success", "result ok, goodphoto is $goodPhoto")
-        }
-        else if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == Activity.RESULT_CANCELED) {
+        } else if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == Activity.RESULT_CANCELED) {
             Log.d("error", "result canceled")
             goodPhoto = false
         }
@@ -301,44 +310,61 @@ class BeerNew : AppCompatActivity(), SensorEventListener {
     }
 
     private fun validate(): Boolean {
-        if(et_beer_name.text.toString().trim().equals("", true)) {
+        if (et_beer_name.text.toString().trim().equals("", true)) {
             et_beer_name.error = "Name can not be blank."
             return false
         }
-        if(et_beer_brewer.text.toString().trim().equals("", true)) {
+        if (et_beer_brewer.text.toString().trim().equals("", true)) {
             et_beer_brewer.error = "Brewer can not be blank."
             return false
         }
-        if(pickedSize < 250.0) {
-            Snackbar.make(findViewById(R.id.view_new_beer), "Please pick a size.", Snackbar.LENGTH_SHORT).setAnchorView(R.id.btn_add).show()
+        if (pickedSize < 250.0) {
+            Snackbar.make(
+                findViewById(R.id.view_new_beer),
+                "Please pick a size.",
+                Snackbar.LENGTH_SHORT
+            ).setAnchorView(R.id.btn_add).show()
             return false
         }
         if (imageFile == null) {
-            Snackbar.make(findViewById(R.id.view_new_beer), "Please take a picture.", Snackbar.LENGTH_SHORT).setAnchorView(R.id.btn_add).show()
+            Snackbar.make(
+                findViewById(R.id.view_new_beer),
+                "Please take a picture.",
+                Snackbar.LENGTH_SHORT
+            ).setAnchorView(R.id.btn_add).show()
             return false
         }
-        if(!goodPhoto) {
+        if (!goodPhoto) {
             Log.d("error", "goodphoto is $goodPhoto")
-            Snackbar.make(findViewById(R.id.view_new_beer), "Please take a picture.", Snackbar.LENGTH_SHORT).setAnchorView(R.id.btn_add).show()
+            Snackbar.make(
+                findViewById(R.id.view_new_beer),
+                "Please take a picture.",
+                Snackbar.LENGTH_SHORT
+            ).setAnchorView(R.id.btn_add).show()
             return false
         }
-        if(et_beer_strength.text.toString().toDoubleOrNull() == null) {
+        if (et_beer_strength.text.toString().toDoubleOrNull() == null) {
             et_beer_strength.error = "Value is not a valid number."
             return false
         }
-        if(pickedType == "") {
-            Snackbar.make(findViewById(R.id.view_new_beer), "Please pick a type.", Snackbar.LENGTH_SHORT).setAnchorView(R.id.btn_add).show()
+        if (pickedType == "") {
+            Snackbar.make(
+                findViewById(R.id.view_new_beer),
+                "Please pick a type.",
+                Snackbar.LENGTH_SHORT
+            ).setAnchorView(R.id.btn_add).show()
             return false
         }
         return true
     }
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
-
     }
 
     override fun onSensorChanged(event: SensorEvent?) {
-        Log.d("sensor event", event?.values?.get(0)?.toString())
+        if (event != null) {
+            lux = event.values?.get(0)!!
+        }
     }
 }
 

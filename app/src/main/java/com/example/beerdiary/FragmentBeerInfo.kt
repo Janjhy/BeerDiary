@@ -155,7 +155,6 @@ class FragmentBeerInfo : Fragment(), OnMapReadyCallback {
     }
 
     private fun getContent() {
-        //val db = activity?.applicationContext?.let { BeerDB.get(it) }
         val temp = model.getBeers().value?.get(position)
         if (temp != null) {
             beerAndReview = temp

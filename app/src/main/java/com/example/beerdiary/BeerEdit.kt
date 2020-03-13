@@ -1,8 +1,13 @@
 package com.example.beerdiary
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
 import android.media.ExifInterface
 import android.net.Uri
 import android.os.Bundle
@@ -13,6 +18,7 @@ import android.util.Log
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.beer_new.*
 import org.osmdroid.config.Configuration
@@ -25,7 +31,7 @@ import java.io.File
 import java.math.BigDecimal
 import java.math.RoundingMode
 
-class BeerEdit : AppCompatActivity(), MapEventsReceiver {
+class BeerEdit : AppCompatActivity(), MapEventsReceiver, SensorEventListener {
 
     private var latitude: Double = 0.0
     private var longitude: Double = 0.0
@@ -41,6 +47,9 @@ class BeerEdit : AppCompatActivity(), MapEventsReceiver {
     private var pickedType: String = ""
     private lateinit var typesArray: Array<String>
     private lateinit var path: String
+    private lateinit var light: Sensor
+    private var lux: Float = 0.0F
+    private lateinit var sensorManager: SensorManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -56,8 +65,7 @@ class BeerEdit : AppCompatActivity(), MapEventsReceiver {
         mapView_new.setTileSource(TileSourceFactory.MAPNIK)
 
         imageView_new.setOnLongClickListener() {
-            Log.d("click", "long click")
-            savePhotoIntent()
+            confirmTakePhoto()
             true
         }
 
@@ -72,7 +80,7 @@ class BeerEdit : AppCompatActivity(), MapEventsReceiver {
         }
 
         button_add_image.setOnClickListener {
-            savePhotoIntent()
+            confirmTakePhoto()
         }
 
         //Add a map overlay to get click events, and set zoom
@@ -89,6 +97,11 @@ class BeerEdit : AppCompatActivity(), MapEventsReceiver {
                 position
             )
         }
+
+        //Setup light sensor
+        sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        light = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT)
+        sensorManager.registerListener(this, light, SensorManager.SENSOR_DELAY_FASTEST)
 
         //Setup type dropdown menu
         typesArray = beerTypes.keys.toTypedArray()
@@ -115,6 +128,11 @@ class BeerEdit : AppCompatActivity(), MapEventsReceiver {
     //Function to get beer item from database
     private fun getBeer(): BeerAndReviews {
         return BeerDB.get(applicationContext).beerDao().getBeerAndReview(beerID)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        sensorManager.unregisterListener(this)
     }
 
     //Setup values into view objects from the beer object
@@ -250,10 +268,8 @@ class BeerEdit : AppCompatActivity(), MapEventsReceiver {
 
     //Tap listener for mapview
     override fun singleTapConfirmedHelper(p: GeoPoint?): Boolean {
-        Log.d("tapped", "at ${p?.latitude} ${p?.longitude}")
         latitude = p?.latitude!!
         longitude = p.longitude
-        Log.d("on tap result", "$latitude and $longitude")
         newMarker()
         return true;
     }
@@ -297,6 +313,29 @@ class BeerEdit : AppCompatActivity(), MapEventsReceiver {
             return false
         }
         return true
+    }
+
+    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
+    }
+
+    override fun onSensorChanged(event: SensorEvent?) {
+        if (event != null) {
+            lux = event.values?.get(0)!!
+        }
+    }
+
+    private fun confirmTakePhoto() {
+        Log.d("lux", lux.toString())
+        if (lux < 50) {
+            MaterialAlertDialogBuilder(this).setTitle("Low light")
+                .setMessage("Low light surrounding may result in a dim photo. Do you want to continue?")
+                .setPositiveButton(R.string.continue_action) { _, _ ->
+                    savePhotoIntent()
+                }
+                .setNegativeButton(R.string.cancel) { _, _ ->
+                }
+                .show()
+        } else savePhotoIntent()
     }
 }
 
